@@ -1,168 +1,104 @@
 # Nova Educação
 
-Plataforma de pré-curso com fundação visual e domínio educacional persistido. A Sprint 04 implementa somente banco e domínio; autenticação, CRUD, dashboards e engines de aprendizagem ainda não fazem parte da aplicação.
+Plataforma de pré-curso com domínio educacional persistido, autenticação por email e senha e áreas protegidas para estudantes e administradores.
 
 ## Stack
 
-- Next.js 16.3.1 com App Router
-- React 19.2.8
-- TypeScript 5.9 em modo estrito
-- Tailwind CSS 4.3 e PostCSS
-- shadcn/ui 4.18 com Base UI e preset Nova
-- Prisma ORM 7.9 com driver adapter PostgreSQL
-- PostgreSQL / Prisma Postgres
-- ESLint 9
+- Next.js 16.3 com App Router e `proxy.ts`
+- React 19 e TypeScript em modo estrito
+- Tailwind CSS 4 e shadcn/ui com Base UI
+- Better Auth 1.6 com adaptador Prisma
+- Prisma ORM 7.9 com PostgreSQL
 
 ## Requisitos
 
 - Node.js 20.9 ou superior
 - npm
 - Uma instância PostgreSQL acessível
-- `DATABASE_URL` válida
 
-## Configuração local
+## Ambiente
 
-1. Instale as dependências. O `postinstall` gera o Prisma Client automaticamente:
+Crie `.env` a partir de `.env.example` e configure:
 
-   ```bash
-   npm install
-   ```
+| Variável | Uso |
+| --- | --- |
+| `DATABASE_URL` | Conexão PostgreSQL usada pelo Prisma e pelo Better Auth |
+| `BETTER_AUTH_SECRET` | Segredo aleatório com pelo menos 32 caracteres |
+| `BETTER_AUTH_URL` | URL base da aplicação, sem barra final |
+| `SEED_ADMIN_PASSWORD` | Senha local do administrador do seed, mínimo de 12 caracteres |
+| `SEED_STUDENT_PASSWORD` | Senha local do estudante do seed, mínimo de 12 caracteres |
 
-2. Crie o arquivo de ambiente local:
+Valores reais devem existir apenas no `.env` ignorado pelo Git e nas variáveis protegidas do provedor de implantação. Use segredos diferentes em desenvolvimento, preview e produção.
 
-   ```powershell
-   Copy-Item .env.example .env
-   ```
+## Execução local
 
-3. Substitua os placeholders de `DATABASE_URL` em `.env` pelos dados do PostgreSQL.
+```bash
+npm install
+npx prisma migrate dev
+npx prisma db seed
+npm run dev
+```
 
-4. Aplique as migrations pendentes:
+A aplicação estará em [http://localhost:3000](http://localhost:3000).
 
-   ```bash
-   npx prisma migrate dev
-   ```
+O seed cria credenciais idempotentes para:
 
-5. Carregue os dados representativos de desenvolvimento:
+- `admin@example.com`, papel `ADMIN`, senha em `SEED_ADMIN_PASSWORD`;
+- `aluno@example.com`, papel `STUDENT`, senha em `SEED_STUDENT_PASSWORD`.
 
-   ```bash
-   npx prisma db seed
-   ```
+Não existe cadastro público. O usuário `COURSE_MANAGER` permanece no domínio, mas não recebe acesso a `/admin` nesta sprint.
 
-6. Inicie a aplicação:
+## Autenticação e autorização
 
-   ```bash
-   npm run dev
-   ```
+O Better Auth gerencia credenciais, sessões persistentes, cookies e logout. O Prisma mantém as tabelas `User`, `Session`, `Account` e `Verification` no mesmo PostgreSQL do domínio educacional.
 
-A aplicação estará disponível em [http://localhost:3000](http://localhost:3000).
+As regras atuais são:
+
+| Rota | Acesso |
+| --- | --- |
+| `/login` | Público; sessões existentes são redirecionadas para sua área |
+| `/student` | Somente `STUDENT` |
+| `/admin` | Somente `ADMIN` |
+| `/forbidden` | Estado de acesso negado |
+
+O `proxy.ts` faz uma triagem antecipada. Os layouts protegidos repetem a validação no servidor por meio de `getSession`, `requireAuth`, `requireRole` e `requireAdmin`; não dependa apenas do proxy para proteger dados ou futuras Server Actions.
+
+## Banco e migrations
+
+```bash
+npx prisma validate
+npx prisma generate
+npx prisma migrate status
+npx prisma migrate deploy
+npx prisma db seed
+```
+
+Histórico atual:
+
+- `20260814192047_init_educational_domain`: domínio educacional da Sprint 04;
+- `20260814195346_add_authentication`: campos e tabelas centrais do Better Auth.
+
+Use `prisma migrate deploy` em produção. `prisma migrate reset` apaga os dados e só pode ser usado em um banco local descartável.
+
+## Implantação na Vercel
+
+O `vercel.json` executa `npm run build:vercel`, que aplica migrations pendentes com `prisma migrate deploy` antes da build do Next.js. Configure as cinco variáveis da seção **Ambiente** no projeto Vercel antes do primeiro deploy.
+
+Para produção, defina `BETTER_AUTH_URL` com o domínio canônico HTTPS. Em ambientes Preview que usam URLs variáveis, forneça uma URL estável destinada aos testes de autenticação ou configure explicitamente o valor por ambiente no painel da Vercel.
+
+O seed não roda automaticamente durante o deploy. Execute `npx prisma db seed` de forma controlada com acesso às variáveis do ambiente quando precisar provisionar as contas iniciais.
 
 ## Comandos
 
 | Comando | Finalidade |
 | --- | --- |
-| `npm run dev` | Inicia o servidor de desenvolvimento |
-| `npm run build` | Gera a build de produção |
-| `npm run start` | Executa a build de produção |
-| `npm run lint` | Executa o ESLint |
-| `npx prisma validate` | Valida schema e configuração |
-| `npx prisma generate` | Gera o Prisma Client |
-| `npx prisma migrate dev` | Cria ou aplica migrations de desenvolvimento |
-| `npx prisma migrate deploy` | Aplica migrations pendentes em produção |
-| `npx prisma migrate status` | Compara banco e histórico local |
-| `npx prisma db seed` | Executa o seed idempotente |
+| `npm run dev` | Servidor de desenvolvimento |
+| `npm run build` | Build local de produção |
+| `npm run build:vercel` | Migrations pendentes e build de implantação |
+| `npm run start` | Servidor da build de produção |
+| `npm run lint` | ESLint |
+| `npx prisma db seed` | Seed idempotente do domínio e das credenciais |
 
-## Domínio educacional
+## Escopo funcional
 
-A hierarquia de conteúdo é genérica e suporta diferentes áreas de conhecimento:
-
-```text
-Course
-└── Subject
-    └── Module
-        └── Lesson
-            ├── Question
-            │   └── Answer
-            └── Assessment
-                └── AssessmentQuestion → Question
-```
-
-O domínio do aluno e da gestão futura contém:
-
-- `User`, com roles `STUDENT`, `ADMIN` e `COURSE_MANAGER`;
-- `CourseManager`, vínculo de responsabilidade entre usuário e curso;
-- `Enrollment`, vínculo único entre usuário e curso;
-- `Progress`, estado de uma aula dentro da matrícula;
-- `Attempt`, tentativa numerada de uma avaliação;
-- `AttemptAnswer`, alternativa selecionada para cada questão da tentativa.
-
-A persistência mínima de gamificação contém `XPTransaction`, `Achievement`, `UserAchievement` e `StudyStreak`. Não existe engine de gamificação nesta etapa.
-
-## Integridade dos dados
-
-- Slugs de cursos, avaliações e conquistas são globais; slugs hierárquicos são únicos dentro do pai.
-- Ordem de disciplinas, módulos, aulas, questões e alternativas possui constraints e unicidade contextual.
-- Matrícula é única por usuário e curso.
-- Progresso é único por matrícula e aula.
-- Número de tentativa é único por matrícula e avaliação.
-- A FK composta de `AttemptAnswer` garante que a alternativa pertence à questão respondida.
-- Dados educacionais e históricos utilizam `RESTRICT`; cascata fica limitada a vínculos dependentes.
-
-## Migration
-
-A migration inicial do domínio está em:
-
-```text
-prisma/migrations/20260814192047_init_educational_domain/migration.sql
-```
-
-Em produção, aplique migrations com `npx prisma migrate deploy`. Não execute `migrate dev` contra o banco de produção.
-
-## Seed
-
-O seed em `prisma/seed.ts` cria um conjunto pequeno e coerente:
-
-- curso de Economia com 2 disciplinas, 3 módulos e 4 aulas;
-- 2 questões, 5 alternativas e 1 avaliação;
-- usuários aluno, gestor e administrador;
-- vínculo de gestor, matrícula, progresso, tentativa e respostas;
-- transação de XP, conquista e streak.
-
-O seed utiliza identificadores únicos e `upsert`, podendo ser executado novamente sem duplicar os registros representativos.
-
-## Reset de desenvolvimento
-
-Somente em um banco local ou dedicado ao desenvolvimento, é possível recriar tudo com:
-
-```bash
-npx prisma migrate reset
-```
-
-Esse comando apaga todos os dados do banco configurado. Nunca o execute em produção ou em um ambiente compartilhado.
-
-## Estrutura relevante
-
-```text
-app/
-├── admin/page.tsx
-├── student/page.tsx
-├── layout.tsx
-└── page.tsx
-components/
-├── layout/
-├── shared/
-└── ui/
-lib/
-├── generated/prisma/  # gerado localmente
-├── prisma.ts
-└── utils.ts
-prisma/
-├── migrations/
-├── schema.prisma
-└── seed.ts
-```
-
-As rotas `/student` e `/admin` continuam como placeholders. Nenhuma autenticação, autorização funcional, API, formulário ou interface de domínio foi implementada.
-
-## Segurança de ambiente
-
-Arquivos `.env*` são ignorados pelo Git, com exceção de `.env.example`, que contém apenas placeholders. Credenciais reais devem existir somente no ambiente local ou no provedor de implantação.
+O painel gestor oferece layout responsivo, navegação preparada, breadcrumbs, resumo leve do banco e estados de carregamento, erro e vazio. Os itens de cursos, disciplinas, módulos, aulas, avaliações, usuários, relatórios e gamificação permanecem desabilitados até suas respectivas sprints; nenhum CRUD foi antecipado.

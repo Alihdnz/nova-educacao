@@ -1,6 +1,7 @@
 import "dotenv/config";
 
 import { PrismaPg } from "@prisma/adapter-pg";
+import { hashPassword } from "better-auth/crypto";
 
 import {
   AttemptStatus,
@@ -17,6 +18,16 @@ const connectionString = process.env.DATABASE_URL;
 
 if (!connectionString) {
   throw new Error("DATABASE_URL is not configured.");
+}
+
+function getSeedPassword(name: "SEED_ADMIN_PASSWORD" | "SEED_STUDENT_PASSWORD") {
+  const password = process.env[name];
+
+  if (!password || password.length < 12) {
+    throw new Error(`${name} must be configured with at least 12 characters.`);
+  }
+
+  return password;
 }
 
 const prisma = new PrismaClient({
@@ -417,7 +428,7 @@ async function main() {
     },
   });
 
-  await prisma.user.upsert({
+  const admin = await prisma.user.upsert({
     where: { email: "admin@example.com" },
     update: { name: "Administrador Exemplo", role: UserRole.ADMIN },
     create: {
@@ -426,6 +437,44 @@ async function main() {
       role: UserRole.ADMIN,
     },
   });
+
+  const [studentPassword, adminPassword] = await Promise.all([
+    hashPassword(getSeedPassword("SEED_STUDENT_PASSWORD")),
+    hashPassword(getSeedPassword("SEED_ADMIN_PASSWORD")),
+  ]);
+
+  await Promise.all([
+    prisma.account.upsert({
+      where: {
+        providerId_accountId: {
+          providerId: "credential",
+          accountId: student.id,
+        },
+      },
+      update: { password: studentPassword, userId: student.id },
+      create: {
+        accountId: student.id,
+        providerId: "credential",
+        userId: student.id,
+        password: studentPassword,
+      },
+    }),
+    prisma.account.upsert({
+      where: {
+        providerId_accountId: {
+          providerId: "credential",
+          accountId: admin.id,
+        },
+      },
+      update: { password: adminPassword, userId: admin.id },
+      create: {
+        accountId: admin.id,
+        providerId: "credential",
+        userId: admin.id,
+        password: adminPassword,
+      },
+    }),
+  ]);
 
   await prisma.courseManager.upsert({
     where: {

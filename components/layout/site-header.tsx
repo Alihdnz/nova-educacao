@@ -2,6 +2,7 @@ import { BookOpenText } from "lucide-react";
 import Link from "next/link";
 
 import { Container } from "@/components/layout/container";
+import { buttonVariants } from "@/components/ui/button";
 
 export function SiteHeader() {
   return (
@@ -17,12 +18,18 @@ export function SiteHeader() {
           <span className="truncate">Nova Educação</span>
         </Link>
 
-        <nav aria-label="Navegação principal">
+        <nav className="flex items-center gap-1" aria-label="Navegação principal">
           <Link
             href="/"
             className="rounded-md px-2 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
           >
             Início
+          </Link>
+          <Link
+            href="/login"
+            className={buttonVariants({ variant: "outline" })}
+          >
+            Entrar
           </Link>
         </nav>
       </Container>

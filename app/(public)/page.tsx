@@ -7,16 +7,16 @@ import { buttonVariants } from "@/components/ui/button";
 
 const areas = [
   {
-    description: "Estrutura inicial reservada para a futura experiência de aprendizagem.",
+    description: "Acompanhe aulas, avaliações e seu progresso de aprendizagem.",
     href: "/student",
     icon: GraduationCap,
     title: "Área do estudante",
   },
   {
-    description: "Estrutura inicial reservada para a futura gestão da plataforma.",
+    description: "Acesse a visão operacional e os recursos de gestão da plataforma.",
     href: "/admin",
     icon: Settings2,
-    title: "Administração",
+    title: "Painel gestor",
   },
 ] as const;
 
@@ -24,14 +24,14 @@ export default function Home() {
   return (
     <Container className="py-10 sm:py-14">
       <PageHeader
-        eyebrow="Fundação da aplicação"
+        eyebrow="Ambiente de aprendizagem"
         title="Plataforma de Pré-Curso"
-        description="Uma base simples e consistente para as próximas etapas da experiência educacional."
+        description="Conteúdo, acompanhamento e gestão educacional em um único ambiente."
       />
 
       <section className="pt-8" aria-labelledby="areas-title">
         <h2 id="areas-title" className="mb-4 text-lg font-semibold">
-          Áreas base
+          Áreas da plataforma
         </h2>
         <div className="divide-y rounded-lg border">
           {areas.map((area) => {
