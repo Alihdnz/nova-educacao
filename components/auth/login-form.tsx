@@ -1,7 +1,6 @@
 "use client";
 
 import { Eye, EyeOff, LoaderCircle, LogIn } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -14,7 +13,6 @@ const destinationByRole: Record<string, string> = {
 };
 
 export function LoginForm() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -41,13 +39,11 @@ export function LoginForm() {
       const destination = destinationByRole[result.data.user.role];
 
       if (!destination) {
-        router.replace("/forbidden");
-        router.refresh();
+        window.location.replace("/forbidden");
         return;
       }
 
-      router.replace(destination);
-      router.refresh();
+      window.location.replace(destination);
     } catch {
       setError("Não foi possível entrar agora. Tente novamente.");
     } finally {
