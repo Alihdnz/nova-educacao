@@ -1,6 +1,6 @@
 # Nova Educação
 
-Fundação técnica e visual de uma plataforma de pré-curso. O projeto está no encerramento da Sprint 03 e contém apenas a infraestrutura compartilhada da aplicação; autenticação e domínio educacional ficam fora deste escopo.
+Plataforma de pré-curso com fundação visual e domínio educacional persistido. A Sprint 04 implementa somente banco e domínio; autenticação, CRUD, dashboards e engines de aprendizagem ainda não fazem parte da aplicação.
 
 ## Stack
 
@@ -9,7 +9,7 @@ Fundação técnica e visual de uma plataforma de pré-curso. O projeto está no
 - TypeScript 5.9 em modo estrito
 - Tailwind CSS 4.3 e PostCSS
 - shadcn/ui 4.18 com Base UI e preset Nova
-- Prisma ORM 7.9
+- Prisma ORM 7.9 com driver adapter PostgreSQL
 - PostgreSQL / Prisma Postgres
 - ESLint 9
 
@@ -22,27 +22,33 @@ Fundação técnica e visual de uma plataforma de pré-curso. O projeto está no
 
 ## Configuração local
 
-1. Instale as dependências:
+1. Instale as dependências. O `postinstall` gera o Prisma Client automaticamente:
 
    ```bash
    npm install
    ```
 
-2. Crie o arquivo de ambiente local a partir do exemplo:
+2. Crie o arquivo de ambiente local:
 
    ```powershell
    Copy-Item .env.example .env
    ```
 
-3. Substitua os placeholders de `DATABASE_URL` em `.env` pelos dados do seu PostgreSQL. Não versione esse arquivo.
+3. Substitua os placeholders de `DATABASE_URL` em `.env` pelos dados do PostgreSQL.
 
-4. Gere o Prisma Client:
+4. Aplique as migrations pendentes:
 
    ```bash
-   npx prisma generate
+   npx prisma migrate dev
    ```
 
-5. Inicie o ambiente de desenvolvimento:
+5. Carregue os dados representativos de desenvolvimento:
+
+   ```bash
+   npx prisma db seed
+   ```
+
+6. Inicie a aplicação:
 
    ```bash
    npm run dev
@@ -58,41 +64,104 @@ A aplicação estará disponível em [http://localhost:3000](http://localhost:30
 | `npm run build` | Gera a build de produção |
 | `npm run start` | Executa a build de produção |
 | `npm run lint` | Executa o ESLint |
+| `npx prisma validate` | Valida schema e configuração |
 | `npx prisma generate` | Gera o Prisma Client |
-| `npx prisma validate` | Valida o schema e a configuração do Prisma |
+| `npx prisma migrate dev` | Cria ou aplica migrations de desenvolvimento |
+| `npx prisma migrate deploy` | Aplica migrations pendentes em produção |
+| `npx prisma migrate status` | Compara banco e histórico local |
+| `npx prisma db seed` | Executa o seed idempotente |
 
-## Prisma e banco
+## Domínio educacional
 
-O datasource PostgreSQL é configurado em `prisma.config.ts` por meio de `DATABASE_URL`. O schema em `prisma/schema.prisma` está propositalmente sem modelos: o domínio educacional será definido em uma sprint posterior.
+A hierarquia de conteúdo é genérica e suporta diferentes áreas de conhecimento:
 
-O client gerado fica em `lib/generated/prisma` e não é versionado. A instância compartilhada em `lib/prisma.ts` utiliza `@prisma/adapter-pg` e evita múltiplos clients durante o hot reload do Next.js.
+```text
+Course
+└── Subject
+    └── Module
+        └── Lesson
+            ├── Question
+            │   └── Answer
+            └── Assessment
+                └── AssessmentQuestion → Question
+```
 
-## Estrutura
+O domínio do aluno e da gestão futura contém:
+
+- `User`, com roles `STUDENT`, `ADMIN` e `COURSE_MANAGER`;
+- `CourseManager`, vínculo de responsabilidade entre usuário e curso;
+- `Enrollment`, vínculo único entre usuário e curso;
+- `Progress`, estado de uma aula dentro da matrícula;
+- `Attempt`, tentativa numerada de uma avaliação;
+- `AttemptAnswer`, alternativa selecionada para cada questão da tentativa.
+
+A persistência mínima de gamificação contém `XPTransaction`, `Achievement`, `UserAchievement` e `StudyStreak`. Não existe engine de gamificação nesta etapa.
+
+## Integridade dos dados
+
+- Slugs de cursos, avaliações e conquistas são globais; slugs hierárquicos são únicos dentro do pai.
+- Ordem de disciplinas, módulos, aulas, questões e alternativas possui constraints e unicidade contextual.
+- Matrícula é única por usuário e curso.
+- Progresso é único por matrícula e aula.
+- Número de tentativa é único por matrícula e avaliação.
+- A FK composta de `AttemptAnswer` garante que a alternativa pertence à questão respondida.
+- Dados educacionais e históricos utilizam `RESTRICT`; cascata fica limitada a vínculos dependentes.
+
+## Migration
+
+A migration inicial do domínio está em:
+
+```text
+prisma/migrations/20260814192047_init_educational_domain/migration.sql
+```
+
+Em produção, aplique migrations com `npx prisma migrate deploy`. Não execute `migrate dev` contra o banco de produção.
+
+## Seed
+
+O seed em `prisma/seed.ts` cria um conjunto pequeno e coerente:
+
+- curso de Economia com 2 disciplinas, 3 módulos e 4 aulas;
+- 2 questões, 5 alternativas e 1 avaliação;
+- usuários aluno, gestor e administrador;
+- vínculo de gestor, matrícula, progresso, tentativa e respostas;
+- transação de XP, conquista e streak.
+
+O seed utiliza identificadores únicos e `upsert`, podendo ser executado novamente sem duplicar os registros representativos.
+
+## Reset de desenvolvimento
+
+Somente em um banco local ou dedicado ao desenvolvimento, é possível recriar tudo com:
+
+```bash
+npx prisma migrate reset
+```
+
+Esse comando apaga todos os dados do banco configurado. Nunca o execute em produção ou em um ambiente compartilhado.
+
+## Estrutura relevante
 
 ```text
 app/
 ├── admin/page.tsx
 ├── student/page.tsx
-├── globals.css
 ├── layout.tsx
 └── page.tsx
 components/
 ├── layout/
-│   ├── container.tsx
-│   └── site-header.tsx
 ├── shared/
-│   └── page-header.tsx
 └── ui/
-    └── button.tsx
 lib/
 ├── generated/prisma/  # gerado localmente
 ├── prisma.ts
 └── utils.ts
 prisma/
-└── schema.prisma
+├── migrations/
+├── schema.prisma
+└── seed.ts
 ```
 
-As rotas `/student` e `/admin` são placeholders mínimos usados para validar a fundação visual. Elas ainda não contêm dashboards, autenticação, autorização, CRUD ou regras de domínio.
+As rotas `/student` e `/admin` continuam como placeholders. Nenhuma autenticação, autorização funcional, API, formulário ou interface de domínio foi implementada.
 
 ## Segurança de ambiente
 

@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../lib/generated/prisma"
@@ -10,4 +5,332 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum QuestionType {
+  SINGLE_CHOICE
+  TRUE_FALSE
+}
+
+enum UserRole {
+  STUDENT
+  ADMIN
+  COURSE_MANAGER
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum ProgressStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum AttemptStatus {
+  IN_PROGRESS
+  SUBMITTED
+  ABANDONED
+}
+
+enum XPReason {
+  LESSON_COMPLETED
+  ASSESSMENT_COMPLETED
+  COURSE_COMPLETED
+  ACHIEVEMENT_EARNED
+  MANUAL_ADJUSTMENT
+}
+
+// Sprint 04.1 - Educational hierarchy
+
+model Course {
+  id            String          @id @default(cuid())
+  title         String          @db.VarChar(160)
+  slug          String          @unique @db.VarChar(160)
+  description   String?         @db.Text
+  coverImageUrl String?         @db.VarChar(2048)
+  status        ContentStatus   @default(DRAFT)
+  createdAt     DateTime        @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime        @updatedAt @db.Timestamptz(3)
+  subjects      Subject[]
+  enrollments   Enrollment[]
+  managers      CourseManager[]
+
+  @@index([status])
+}
+
+model Subject {
+  id          String        @id @default(cuid())
+  courseId    String
+  title       String        @db.VarChar(160)
+  slug        String        @db.VarChar(160)
+  description String?       @db.Text
+  order       Int
+  status      ContentStatus @default(DRAFT)
+  createdAt   DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime      @updatedAt @db.Timestamptz(3)
+  course      Course        @relation(fields: [courseId], references: [id], onDelete: Restrict)
+  modules     Module[]
+
+  @@unique([courseId, slug])
+  @@unique([courseId, order])
+}
+
+model Module {
+  id          String        @id @default(cuid())
+  subjectId   String
+  title       String        @db.VarChar(160)
+  slug        String        @db.VarChar(160)
+  description String?       @db.Text
+  order       Int
+  status      ContentStatus @default(DRAFT)
+  createdAt   DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime      @updatedAt @db.Timestamptz(3)
+  subject     Subject       @relation(fields: [subjectId], references: [id], onDelete: Restrict)
+  lessons     Lesson[]
+
+  @@unique([subjectId, slug])
+  @@unique([subjectId, order])
+}
+
+model Lesson {
+  id          String        @id @default(cuid())
+  moduleId    String
+  title       String        @db.VarChar(160)
+  slug        String        @db.VarChar(160)
+  description String?       @db.Text
+  content     String?       @db.Text
+  order       Int
+  status      ContentStatus @default(DRAFT)
+  createdAt   DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime      @updatedAt @db.Timestamptz(3)
+  module      Module        @relation(fields: [moduleId], references: [id], onDelete: Restrict)
+  questions   Question[]
+  assessments Assessment[]
+  progresses  Progress[]
+
+  @@unique([moduleId, slug])
+  @@unique([moduleId, order])
+}
+
+// Sprint 04.2 - Questions and assessments
+
+model Question {
+  id                  String               @id @default(cuid())
+  lessonId            String?
+  prompt              String               @db.Text
+  type                QuestionType
+  order               Int?
+  status              ContentStatus        @default(DRAFT)
+  createdAt           DateTime             @default(now()) @db.Timestamptz(3)
+  updatedAt           DateTime             @updatedAt @db.Timestamptz(3)
+  lesson              Lesson?              @relation(fields: [lessonId], references: [id], onDelete: Restrict)
+  answers             Answer[]
+  assessmentQuestions AssessmentQuestion[]
+  attemptAnswers      AttemptAnswer[]
+
+  @@unique([lessonId, order])
+  @@index([lessonId, status])
+}
+
+model Answer {
+  id             String          @id @default(cuid())
+  questionId     String
+  text           String          @db.Text
+  order          Int
+  isCorrect      Boolean         @default(false)
+  createdAt      DateTime        @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime        @updatedAt @db.Timestamptz(3)
+  question       Question        @relation(fields: [questionId], references: [id], onDelete: Restrict)
+  attemptAnswers AttemptAnswer[] @relation("SelectedAnswer")
+
+  @@unique([questionId, order])
+  @@unique([id, questionId])
+}
+
+model Assessment {
+  id          String               @id @default(cuid())
+  lessonId    String?
+  title       String               @db.VarChar(160)
+  slug        String               @unique @db.VarChar(160)
+  description String?              @db.Text
+  status      ContentStatus        @default(DRAFT)
+  createdAt   DateTime             @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime             @updatedAt @db.Timestamptz(3)
+  lesson      Lesson?              @relation(fields: [lessonId], references: [id], onDelete: Restrict)
+  questions   AssessmentQuestion[]
+  attempts    Attempt[]
+
+  @@index([lessonId, status])
+}
+
+model AssessmentQuestion {
+  assessmentId String
+  questionId   String
+  order        Int
+  weight       Decimal    @default(1) @db.Decimal(6, 2)
+  createdAt    DateTime   @default(now()) @db.Timestamptz(3)
+  assessment   Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  question     Question   @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@id([assessmentId, questionId])
+  @@unique([assessmentId, order])
+  @@index([questionId])
+}
+
+// Sprint 04.3 - Identity, enrollment and learning records
+
+model User {
+  id             String            @id @default(cuid())
+  name           String            @db.VarChar(160)
+  email          String            @unique @db.VarChar(320)
+  role           UserRole          @default(STUDENT)
+  createdAt      DateTime          @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime          @updatedAt @db.Timestamptz(3)
+  enrollments    Enrollment[]
+  managedCourses CourseManager[]
+  xpTransactions XPTransaction[]
+  achievements   UserAchievement[]
+  streak         StudyStreak?
+
+  @@index([role])
+}
+
+model CourseManager {
+  userId     String
+  courseId   String
+  assignedAt DateTime @default(now()) @db.Timestamptz(3)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@id([userId, courseId])
+  @@index([courseId])
+}
+
+model Enrollment {
+  id          String           @id @default(cuid())
+  userId      String
+  courseId    String
+  status      EnrollmentStatus @default(ACTIVE)
+  enrolledAt  DateTime         @default(now()) @db.Timestamptz(3)
+  completedAt DateTime?        @db.Timestamptz(3)
+  cancelledAt DateTime?        @db.Timestamptz(3)
+  createdAt   DateTime         @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime         @updatedAt @db.Timestamptz(3)
+  user        User             @relation(fields: [userId], references: [id], onDelete: Restrict)
+  course      Course           @relation(fields: [courseId], references: [id], onDelete: Restrict)
+  progresses  Progress[]
+  attempts    Attempt[]
+
+  @@unique([userId, courseId])
+  @@index([courseId, status])
+}
+
+model Progress {
+  id           String         @id @default(cuid())
+  enrollmentId String
+  lessonId     String
+  status       ProgressStatus @default(NOT_STARTED)
+  startedAt    DateTime?      @db.Timestamptz(3)
+  completedAt  DateTime?      @db.Timestamptz(3)
+  createdAt    DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime       @updatedAt @db.Timestamptz(3)
+  enrollment   Enrollment     @relation(fields: [enrollmentId], references: [id], onDelete: Restrict)
+  lesson       Lesson         @relation(fields: [lessonId], references: [id], onDelete: Restrict)
+
+  @@unique([enrollmentId, lessonId])
+  @@index([lessonId, status])
+}
+
+model Attempt {
+  id            String          @id @default(cuid())
+  enrollmentId  String
+  assessmentId  String
+  attemptNumber Int
+  status        AttemptStatus   @default(IN_PROGRESS)
+  score         Decimal?        @db.Decimal(7, 2)
+  startedAt     DateTime        @default(now()) @db.Timestamptz(3)
+  submittedAt   DateTime?       @db.Timestamptz(3)
+  createdAt     DateTime        @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime        @updatedAt @db.Timestamptz(3)
+  enrollment    Enrollment      @relation(fields: [enrollmentId], references: [id], onDelete: Restrict)
+  assessment    Assessment      @relation(fields: [assessmentId], references: [id], onDelete: Restrict)
+  answers       AttemptAnswer[]
+
+  @@unique([enrollmentId, assessmentId, attemptNumber])
+  @@index([assessmentId, status])
+}
+
+model AttemptAnswer {
+  id               String   @id @default(cuid())
+  attemptId        String
+  questionId       String
+  selectedAnswerId String
+  isCorrect        Boolean?
+  answeredAt       DateTime @default(now()) @db.Timestamptz(3)
+  createdAt        DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime @updatedAt @db.Timestamptz(3)
+  attempt          Attempt  @relation(fields: [attemptId], references: [id], onDelete: Restrict)
+  question         Question @relation(fields: [questionId], references: [id], onDelete: Restrict)
+  selectedAnswer   Answer   @relation("SelectedAnswer", fields: [selectedAnswerId, questionId], references: [id, questionId], onDelete: Restrict)
+
+  @@unique([attemptId, questionId])
+  @@index([questionId])
+  @@index([selectedAnswerId, questionId])
+}
+
+// Sprint 04.4 - Minimal persistence for future gamification
+
+model XPTransaction {
+  id          String   @id @default(cuid())
+  userId      String
+  amount      Int
+  reason      XPReason
+  description String?  @db.VarChar(255)
+  referenceId String?  @db.VarChar(191)
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@index([userId, createdAt])
+}
+
+model Achievement {
+  id          String            @id @default(cuid())
+  title       String            @db.VarChar(160)
+  slug        String            @unique @db.VarChar(160)
+  description String?           @db.Text
+  xpReward    Int               @default(0)
+  createdAt   DateTime          @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime          @updatedAt @db.Timestamptz(3)
+  users       UserAchievement[]
+}
+
+model UserAchievement {
+  userId        String
+  achievementId String
+  earnedAt      DateTime    @default(now()) @db.Timestamptz(3)
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  @@id([userId, achievementId])
+  @@index([achievementId])
+}
+
+model StudyStreak {
+  userId        String    @id
+  currentDays   Int       @default(0)
+  longestDays   Int       @default(0)
+  lastStudyDate DateTime? @db.Date
+  createdAt     DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime  @updatedAt @db.Timestamptz(3)
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

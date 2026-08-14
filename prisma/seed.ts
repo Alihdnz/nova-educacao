@@ -1,0 +1,630 @@
+import "dotenv/config";
+
+import { PrismaPg } from "@prisma/adapter-pg";
+
+import {
+  AttemptStatus,
+  ContentStatus,
+  EnrollmentStatus,
+  PrismaClient,
+  ProgressStatus,
+  QuestionType,
+  UserRole,
+  XPReason,
+} from "../lib/generated/prisma/client";
+
+const connectionString = process.env.DATABASE_URL;
+
+if (!connectionString) {
+  throw new Error("DATABASE_URL is not configured.");
+}
+
+const prisma = new PrismaClient({
+  adapter: new PrismaPg({ connectionString }),
+});
+
+async function main() {
+  const course = await prisma.course.upsert({
+    where: { slug: "economia" },
+    update: {
+      title: "Economia",
+      description: "Curso introdutório de Economia.",
+      status: ContentStatus.PUBLISHED,
+    },
+    create: {
+      title: "Economia",
+      slug: "economia",
+      description: "Curso introdutório de Economia.",
+      status: ContentStatus.PUBLISHED,
+    },
+  });
+
+  const introductionSubject = await prisma.subject.upsert({
+    where: {
+      courseId_slug: {
+        courseId: course.id,
+        slug: "introducao-a-economia",
+      },
+    },
+    update: {
+      title: "Introdução à Economia",
+      description: "Princípios fundamentais do pensamento econômico.",
+      order: 1,
+      status: ContentStatus.PUBLISHED,
+    },
+    create: {
+      courseId: course.id,
+      title: "Introdução à Economia",
+      slug: "introducao-a-economia",
+      description: "Princípios fundamentais do pensamento econômico.",
+      order: 1,
+      status: ContentStatus.PUBLISHED,
+    },
+  });
+
+  const microeconomicsSubject = await prisma.subject.upsert({
+    where: {
+      courseId_slug: {
+        courseId: course.id,
+        slug: "microeconomia",
+      },
+    },
+    update: {
+      title: "Microeconomia",
+      description: "Decisões individuais, mercados e formação de preços.",
+      order: 2,
+      status: ContentStatus.PUBLISHED,
+    },
+    create: {
+      courseId: course.id,
+      title: "Microeconomia",
+      slug: "microeconomia",
+      description: "Decisões individuais, mercados e formação de preços.",
+      order: 2,
+      status: ContentStatus.PUBLISHED,
+    },
+  });
+
+  const fundamentalsModule = await prisma.module.upsert({
+    where: {
+      subjectId_slug: {
+        subjectId: introductionSubject.id,
+        slug: "fundamentos",
+      },
+    },
+    update: {
+      title: "Fundamentos",
+      order: 1,
+      status: ContentStatus.PUBLISHED,
+    },
+    create: {
+      subjectId: introductionSubject.id,
+      title: "Fundamentos",
+      slug: "fundamentos",
+      description: "Conceitos que estruturam o estudo da Economia.",
+      order: 1,
+      status: ContentStatus.PUBLISHED,
+    },
+  });
+
+  const basicConceptsModule = await prisma.module.upsert({
+    where: {
+      subjectId_slug: {
+        subjectId: introductionSubject.id,
+        slug: "conceitos-basicos",
+      },
+    },
+    update: {
+      title: "Conceitos básicos",
+      order: 2,
+      status: ContentStatus.PUBLISHED,
+    },
+    create: {
+      subjectId: introductionSubject.id,
+      title: "Conceitos básicos",
+      slug: "conceitos-basicos",
+      order: 2,
+      status: ContentStatus.PUBLISHED,
+    },
+  });
+
+  const supplyDemandModule = await prisma.module.upsert({
+    where: {
+      subjectId_slug: {
+        subjectId: microeconomicsSubject.id,
+        slug: "oferta-e-demanda",
+      },
+    },
+    update: {
+      title: "Oferta e demanda",
+      order: 1,
+      status: ContentStatus.PUBLISHED,
+    },
+    create: {
+      subjectId: microeconomicsSubject.id,
+      title: "Oferta e demanda",
+      slug: "oferta-e-demanda",
+      order: 1,
+      status: ContentStatus.PUBLISHED,
+    },
+  });
+
+  const economyLesson = await prisma.lesson.upsert({
+    where: {
+      moduleId_slug: {
+        moduleId: fundamentalsModule.id,
+        slug: "o-que-e-economia",
+      },
+    },
+    update: {
+      title: "O que é Economia?",
+      order: 1,
+      status: ContentStatus.PUBLISHED,
+    },
+    create: {
+      moduleId: fundamentalsModule.id,
+      title: "O que é Economia?",
+      slug: "o-que-e-economia",
+      description: "Apresentação do objeto de estudo da Economia.",
+      content:
+        "A Economia estuda como pessoas e sociedades alocam recursos escassos.",
+      order: 1,
+      status: ContentStatus.PUBLISHED,
+    },
+  });
+
+  const scarcityLesson = await prisma.lesson.upsert({
+    where: {
+      moduleId_slug: {
+        moduleId: fundamentalsModule.id,
+        slug: "escassez-e-escolha",
+      },
+    },
+    update: {
+      title: "Escassez e escolha",
+      order: 2,
+      status: ContentStatus.PUBLISHED,
+    },
+    create: {
+      moduleId: fundamentalsModule.id,
+      title: "Escassez e escolha",
+      slug: "escassez-e-escolha",
+      description: "A relação entre recursos limitados e decisões.",
+      order: 2,
+      status: ContentStatus.PUBLISHED,
+    },
+  });
+
+  await prisma.lesson.upsert({
+    where: {
+      moduleId_slug: {
+        moduleId: basicConceptsModule.id,
+        slug: "custo-de-oportunidade",
+      },
+    },
+    update: {
+      title: "Custo de oportunidade",
+      order: 1,
+      status: ContentStatus.PUBLISHED,
+    },
+    create: {
+      moduleId: basicConceptsModule.id,
+      title: "Custo de oportunidade",
+      slug: "custo-de-oportunidade",
+      order: 1,
+      status: ContentStatus.PUBLISHED,
+    },
+  });
+
+  await prisma.lesson.upsert({
+    where: {
+      moduleId_slug: {
+        moduleId: supplyDemandModule.id,
+        slug: "introducao-a-demanda",
+      },
+    },
+    update: {
+      title: "Introdução à demanda",
+      order: 1,
+      status: ContentStatus.PUBLISHED,
+    },
+    create: {
+      moduleId: supplyDemandModule.id,
+      title: "Introdução à demanda",
+      slug: "introducao-a-demanda",
+      order: 1,
+      status: ContentStatus.PUBLISHED,
+    },
+  });
+
+  const scarcityQuestion = await prisma.question.upsert({
+    where: { id: "seed-question-scarcity" },
+    update: {
+      lessonId: economyLesson.id,
+      prompt: "O que caracteriza a escassez econômica?",
+      type: QuestionType.SINGLE_CHOICE,
+      order: 1,
+      status: ContentStatus.PUBLISHED,
+    },
+    create: {
+      id: "seed-question-scarcity",
+      lessonId: economyLesson.id,
+      prompt: "O que caracteriza a escassez econômica?",
+      type: QuestionType.SINGLE_CHOICE,
+      order: 1,
+      status: ContentStatus.PUBLISHED,
+    },
+  });
+
+  const choicesQuestion = await prisma.question.upsert({
+    where: { id: "seed-question-choices" },
+    update: {
+      lessonId: economyLesson.id,
+      prompt: "Toda escolha econômica envolve abrir mão de uma alternativa.",
+      type: QuestionType.TRUE_FALSE,
+      order: 2,
+      status: ContentStatus.PUBLISHED,
+    },
+    create: {
+      id: "seed-question-choices",
+      lessonId: economyLesson.id,
+      prompt: "Toda escolha econômica envolve abrir mão de uma alternativa.",
+      type: QuestionType.TRUE_FALSE,
+      order: 2,
+      status: ContentStatus.PUBLISHED,
+    },
+  });
+
+  const scarceResourcesAnswer = await prisma.answer.upsert({
+    where: {
+      questionId_order: { questionId: scarcityQuestion.id, order: 1 },
+    },
+    update: {
+      text: "Os recursos são limitados diante de necessidades e desejos.",
+      isCorrect: true,
+    },
+    create: {
+      questionId: scarcityQuestion.id,
+      text: "Os recursos são limitados diante de necessidades e desejos.",
+      order: 1,
+      isCorrect: true,
+    },
+  });
+
+  await prisma.answer.upsert({
+    where: {
+      questionId_order: { questionId: scarcityQuestion.id, order: 2 },
+    },
+    update: {
+      text: "Todos os recursos estão disponíveis em quantidade ilimitada.",
+      isCorrect: false,
+    },
+    create: {
+      questionId: scarcityQuestion.id,
+      text: "Todos os recursos estão disponíveis em quantidade ilimitada.",
+      order: 2,
+      isCorrect: false,
+    },
+  });
+
+  await prisma.answer.upsert({
+    where: {
+      questionId_order: { questionId: scarcityQuestion.id, order: 3 },
+    },
+    update: {
+      text: "As pessoas não precisam realizar escolhas.",
+      isCorrect: false,
+    },
+    create: {
+      questionId: scarcityQuestion.id,
+      text: "As pessoas não precisam realizar escolhas.",
+      order: 3,
+      isCorrect: false,
+    },
+  });
+
+  await prisma.answer.upsert({
+    where: {
+      questionId_order: { questionId: choicesQuestion.id, order: 1 },
+    },
+    update: { text: "Falso", isCorrect: false },
+    create: {
+      questionId: choicesQuestion.id,
+      text: "Falso",
+      order: 1,
+      isCorrect: false,
+    },
+  });
+
+  const trueAnswer = await prisma.answer.upsert({
+    where: {
+      questionId_order: { questionId: choicesQuestion.id, order: 2 },
+    },
+    update: { text: "Verdadeiro", isCorrect: true },
+    create: {
+      questionId: choicesQuestion.id,
+      text: "Verdadeiro",
+      order: 2,
+      isCorrect: true,
+    },
+  });
+
+  const assessment = await prisma.assessment.upsert({
+    where: { slug: "avaliacao-fundamentos-economia" },
+    update: {
+      lessonId: economyLesson.id,
+      title: "Avaliação de fundamentos de Economia",
+      status: ContentStatus.PUBLISHED,
+    },
+    create: {
+      lessonId: economyLesson.id,
+      title: "Avaliação de fundamentos de Economia",
+      slug: "avaliacao-fundamentos-economia",
+      description: "Avaliação introdutória sobre escassez e escolhas.",
+      status: ContentStatus.PUBLISHED,
+    },
+  });
+
+  await prisma.assessmentQuestion.upsert({
+    where: {
+      assessmentId_questionId: {
+        assessmentId: assessment.id,
+        questionId: scarcityQuestion.id,
+      },
+    },
+    update: { order: 1, weight: 1 },
+    create: {
+      assessmentId: assessment.id,
+      questionId: scarcityQuestion.id,
+      order: 1,
+      weight: 1,
+    },
+  });
+
+  await prisma.assessmentQuestion.upsert({
+    where: {
+      assessmentId_questionId: {
+        assessmentId: assessment.id,
+        questionId: choicesQuestion.id,
+      },
+    },
+    update: { order: 2, weight: 1 },
+    create: {
+      assessmentId: assessment.id,
+      questionId: choicesQuestion.id,
+      order: 2,
+      weight: 1,
+    },
+  });
+
+  const student = await prisma.user.upsert({
+    where: { email: "aluno@example.com" },
+    update: { name: "Aluno Exemplo", role: UserRole.STUDENT },
+    create: {
+      name: "Aluno Exemplo",
+      email: "aluno@example.com",
+      role: UserRole.STUDENT,
+    },
+  });
+
+  const manager = await prisma.user.upsert({
+    where: { email: "gestor@example.com" },
+    update: { name: "Gestor Exemplo", role: UserRole.COURSE_MANAGER },
+    create: {
+      name: "Gestor Exemplo",
+      email: "gestor@example.com",
+      role: UserRole.COURSE_MANAGER,
+    },
+  });
+
+  await prisma.user.upsert({
+    where: { email: "admin@example.com" },
+    update: { name: "Administrador Exemplo", role: UserRole.ADMIN },
+    create: {
+      name: "Administrador Exemplo",
+      email: "admin@example.com",
+      role: UserRole.ADMIN,
+    },
+  });
+
+  await prisma.courseManager.upsert({
+    where: {
+      userId_courseId: { userId: manager.id, courseId: course.id },
+    },
+    update: {},
+    create: { userId: manager.id, courseId: course.id },
+  });
+
+  const enrollment = await prisma.enrollment.upsert({
+    where: {
+      userId_courseId: { userId: student.id, courseId: course.id },
+    },
+    update: { status: EnrollmentStatus.ACTIVE },
+    create: {
+      userId: student.id,
+      courseId: course.id,
+      status: EnrollmentStatus.ACTIVE,
+    },
+  });
+
+  await prisma.progress.upsert({
+    where: {
+      enrollmentId_lessonId: {
+        enrollmentId: enrollment.id,
+        lessonId: economyLesson.id,
+      },
+    },
+    update: {
+      status: ProgressStatus.COMPLETED,
+      startedAt: new Date("2026-08-01T12:00:00.000Z"),
+      completedAt: new Date("2026-08-01T12:30:00.000Z"),
+    },
+    create: {
+      enrollmentId: enrollment.id,
+      lessonId: economyLesson.id,
+      status: ProgressStatus.COMPLETED,
+      startedAt: new Date("2026-08-01T12:00:00.000Z"),
+      completedAt: new Date("2026-08-01T12:30:00.000Z"),
+    },
+  });
+
+  await prisma.progress.upsert({
+    where: {
+      enrollmentId_lessonId: {
+        enrollmentId: enrollment.id,
+        lessonId: scarcityLesson.id,
+      },
+    },
+    update: {
+      status: ProgressStatus.IN_PROGRESS,
+      startedAt: new Date("2026-08-02T12:00:00.000Z"),
+      completedAt: null,
+    },
+    create: {
+      enrollmentId: enrollment.id,
+      lessonId: scarcityLesson.id,
+      status: ProgressStatus.IN_PROGRESS,
+      startedAt: new Date("2026-08-02T12:00:00.000Z"),
+    },
+  });
+
+  const attempt = await prisma.attempt.upsert({
+    where: {
+      enrollmentId_assessmentId_attemptNumber: {
+        enrollmentId: enrollment.id,
+        assessmentId: assessment.id,
+        attemptNumber: 1,
+      },
+    },
+    update: {
+      status: AttemptStatus.SUBMITTED,
+      score: 2,
+      submittedAt: new Date("2026-08-01T12:45:00.000Z"),
+    },
+    create: {
+      enrollmentId: enrollment.id,
+      assessmentId: assessment.id,
+      attemptNumber: 1,
+      status: AttemptStatus.SUBMITTED,
+      score: 2,
+      startedAt: new Date("2026-08-01T12:35:00.000Z"),
+      submittedAt: new Date("2026-08-01T12:45:00.000Z"),
+    },
+  });
+
+  await prisma.attemptAnswer.upsert({
+    where: {
+      attemptId_questionId: {
+        attemptId: attempt.id,
+        questionId: scarcityQuestion.id,
+      },
+    },
+    update: {
+      selectedAnswerId: scarceResourcesAnswer.id,
+      isCorrect: true,
+    },
+    create: {
+      attemptId: attempt.id,
+      questionId: scarcityQuestion.id,
+      selectedAnswerId: scarceResourcesAnswer.id,
+      isCorrect: true,
+    },
+  });
+
+  await prisma.attemptAnswer.upsert({
+    where: {
+      attemptId_questionId: {
+        attemptId: attempt.id,
+        questionId: choicesQuestion.id,
+      },
+    },
+    update: { selectedAnswerId: trueAnswer.id, isCorrect: true },
+    create: {
+      attemptId: attempt.id,
+      questionId: choicesQuestion.id,
+      selectedAnswerId: trueAnswer.id,
+      isCorrect: true,
+    },
+  });
+
+  const achievement = await prisma.achievement.upsert({
+    where: { slug: "primeira-aula-concluida" },
+    update: {
+      title: "Primeira aula concluída",
+      description: "Concluiu a primeira aula na plataforma.",
+      xpReward: 50,
+    },
+    create: {
+      title: "Primeira aula concluída",
+      slug: "primeira-aula-concluida",
+      description: "Concluiu a primeira aula na plataforma.",
+      xpReward: 50,
+    },
+  });
+
+  await prisma.userAchievement.upsert({
+    where: {
+      userId_achievementId: {
+        userId: student.id,
+        achievementId: achievement.id,
+      },
+    },
+    update: {},
+    create: { userId: student.id, achievementId: achievement.id },
+  });
+
+  await prisma.xPTransaction.upsert({
+    where: { id: "seed-xp-first-lesson" },
+    update: {
+      userId: student.id,
+      amount: 50,
+      reason: XPReason.ACHIEVEMENT_EARNED,
+      description: "XP pela primeira aula concluída.",
+      referenceId: achievement.id,
+    },
+    create: {
+      id: "seed-xp-first-lesson",
+      userId: student.id,
+      amount: 50,
+      reason: XPReason.ACHIEVEMENT_EARNED,
+      description: "XP pela primeira aula concluída.",
+      referenceId: achievement.id,
+    },
+  });
+
+  await prisma.studyStreak.upsert({
+    where: { userId: student.id },
+    update: {
+      currentDays: 2,
+      longestDays: 2,
+      lastStudyDate: new Date("2026-08-02T00:00:00.000Z"),
+    },
+    create: {
+      userId: student.id,
+      currentDays: 2,
+      longestDays: 2,
+      lastStudyDate: new Date("2026-08-02T00:00:00.000Z"),
+    },
+  });
+
+  const [courses, subjects, modules, lessons, questions, users] =
+    await Promise.all([
+      prisma.course.count(),
+      prisma.subject.count(),
+      prisma.module.count(),
+      prisma.lesson.count(),
+      prisma.question.count(),
+      prisma.user.count(),
+    ]);
+
+  console.log({ courses, subjects, modules, lessons, questions, users });
+}
+
+main()
+  .catch((error) => {
+    console.error(error);
+    process.exitCode = 1;
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
