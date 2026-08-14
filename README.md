@@ -59,6 +59,7 @@ As regras atuais são:
 | `/login` | Público; sessões existentes são redirecionadas para sua área |
 | `/student` | Somente `STUDENT` |
 | `/admin` | Somente `ADMIN` |
+| `/admin/courses/**` | Somente `ADMIN`; leituras e mutações validam a sessão no servidor |
 | `/forbidden` | Estado de acesso negado |
 
 O `proxy.ts` faz uma triagem antecipada. Os layouts protegidos repetem a validação no servidor por meio de `getSession`, `requireAuth`, `requireRole` e `requireAdmin`; não dependa apenas do proxy para proteger dados ou futuras Server Actions.
@@ -99,6 +100,34 @@ O seed não roda automaticamente durante o deploy. Execute `npx prisma db seed` 
 | `npm run lint` | ESLint |
 | `npx prisma db seed` | Seed idempotente do domínio e das credenciais |
 
+## Estrutura administrativa
+
+O painel gestor possui dashboard com totais de cursos, cursos publicados, disciplinas e módulos. A navegação ativa contém somente **Dashboard** e **Cursos**.
+
+| Rota | Finalidade |
+| --- | --- |
+| `/admin/courses` | Listar cursos e acessar sua estrutura |
+| `/admin/courses/new` | Criar curso |
+| `/admin/courses/[courseId]` | Visualizar curso, alterar status e gerenciar disciplinas |
+| `/admin/courses/[courseId]/edit` | Editar curso |
+| `/admin/courses/[courseId]/subjects/new` | Criar disciplina no curso atual |
+| `/admin/courses/[courseId]/subjects/[subjectId]/edit` | Editar disciplina validando seu curso |
+| `/admin/courses/[courseId]/subjects/[subjectId]/modules` | Gerenciar módulos da disciplina |
+| `/admin/courses/[courseId]/subjects/[subjectId]/modules/new` | Criar módulo na disciplina atual |
+| `/admin/courses/[courseId]/subjects/[subjectId]/modules/[moduleId]/edit` | Editar módulo validando toda a hierarquia |
+
+Cursos, disciplinas e módulos oferecem criação, edição, listagem, publicação, despublicação e arquivamento. Não há exclusão física nesses fluxos. Todas as mutações são Server Actions explícitas e executam `requireAdmin()` antes de validar ou persistir dados.
+
+### Publicação e vínculos
+
+Cada entidade usa individualmente o enum `ContentStatus`: `DRAFT`, `PUBLISHED` ou `ARCHIVED`. Alterar o status de um pai não publica, despublica, arquiva ou remove seus filhos.
+
+Uma disciplina recebe o `courseId` da rota e só pode ser manipulada dentro desse curso. Um módulo recebe `courseId` e `subjectId` do contexto e as consultas confirmam que a disciplina pertence ao curso e que o módulo pertence à disciplina. Combinações inválidas são rejeitadas no servidor.
+
+### Ordenação
+
+Disciplinas são ordenadas dentro do curso e módulos dentro da disciplina. Os controles movem um item uma posição por vez. A troca ocorre em transação serializável, usa uma posição temporária positiva e respeita as constraints únicas e de ordem positiva existentes no banco.
+
 ## Escopo funcional
 
-O painel gestor oferece layout responsivo, navegação preparada, breadcrumbs, resumo leve do banco e estados de carregamento, erro e vazio. Os itens de cursos, disciplinas, módulos, aulas, avaliações, usuários, relatórios e gamificação permanecem desabilitados até suas respectivas sprints; nenhum CRUD foi antecipado.
+A Sprint 06 cobre somente a estrutura `Course > Subject > Module`. Aulas, conteúdo, questões, avaliações, alunos, matrículas, progresso, gamificação, relatórios e gestão de `COURSE_MANAGER` não possuem CRUD administrativo nesta etapa.

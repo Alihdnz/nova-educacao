@@ -1,13 +1,8 @@
-import {
-  BookOpen,
-  ClipboardCheck,
-  History,
-  Users,
-} from "lucide-react";
+import { BookOpen, Boxes, Eye, History, LibraryBig } from "lucide-react";
 import type { Metadata } from "next";
 
 import { EmptyState } from "@/components/shared/empty-state";
-import { UserRole } from "@/lib/generated/prisma/client";
+import { ContentStatus } from "@/lib/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = {
@@ -22,26 +17,33 @@ const metrics = [
     iconClassName: "bg-sky-50 text-sky-700",
   },
   {
-    icon: Users,
-    key: "students",
-    label: "Estudantes",
+    icon: Eye,
+    key: "publishedCourses",
+    label: "Cursos publicados",
     iconClassName: "bg-emerald-50 text-emerald-700",
   },
   {
-    icon: ClipboardCheck,
-    key: "assessments",
-    label: "Avaliações",
+    icon: LibraryBig,
+    key: "subjects",
+    label: "Disciplinas",
     iconClassName: "bg-amber-50 text-amber-700",
+  },
+  {
+    icon: Boxes,
+    key: "modules",
+    label: "Módulos",
+    iconClassName: "bg-violet-50 text-violet-700",
   },
 ] as const;
 
 export default async function AdminPage() {
-  const [courses, students, assessments] = await Promise.all([
+  const [courses, publishedCourses, subjects, modules] = await Promise.all([
     prisma.course.count(),
-    prisma.user.count({ where: { role: UserRole.STUDENT } }),
-    prisma.assessment.count(),
+    prisma.course.count({ where: { status: ContentStatus.PUBLISHED } }),
+    prisma.subject.count(),
+    prisma.module.count(),
   ]);
-  const values = { assessments, courses, students };
+  const values = { courses, modules, publishedCourses, subjects };
 
   return (
     <div className="space-y-8">
@@ -57,7 +59,7 @@ export default async function AdminPage() {
         <h2 id="summary-title" className="mb-3 text-sm font-semibold">
           Resumo da plataforma
         </h2>
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {metrics.map((metric) => {
             const Icon = metric.icon;
 

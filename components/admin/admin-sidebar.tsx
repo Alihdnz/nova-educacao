@@ -1,19 +1,6 @@
 "use client";
 
-import {
-  BarChart3,
-  BookOpen,
-  BookOpenText,
-  Boxes,
-  ClipboardCheck,
-  GraduationCap,
-  LayoutDashboard,
-  LibraryBig,
-  Presentation,
-  Trophy,
-  Users,
-  X,
-} from "lucide-react";
+import { BookOpen, BookOpenText, GraduationCap, LayoutDashboard, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -21,15 +8,8 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const navigation = [
-  { href: "/admin", icon: LayoutDashboard, label: "Dashboard", ready: true },
-  { href: "/admin/courses", icon: BookOpen, label: "Cursos", ready: false },
-  { href: "/admin/subjects", icon: LibraryBig, label: "Disciplinas", ready: false },
-  { href: "/admin/modules", icon: Boxes, label: "Módulos", ready: false },
-  { href: "/admin/lessons", icon: Presentation, label: "Aulas", ready: false },
-  { href: "/admin/assessments", icon: ClipboardCheck, label: "Avaliações", ready: false },
-  { href: "/admin/users", icon: Users, label: "Usuários", ready: false },
-  { href: "/admin/reports", icon: BarChart3, label: "Relatórios", ready: false },
-  { href: "/admin/gamification", icon: Trophy, label: "Gamificação", ready: false },
+  { href: "/admin", icon: LayoutDashboard, label: "Dashboard" },
+  { href: "/admin/courses", icon: BookOpen, label: "Cursos" },
 ] as const;
 
 type AdminSidebarProps = {
@@ -81,26 +61,15 @@ export function AdminSidebar({ mobile = false, onClose }: AdminSidebarProps) {
 
             return (
               <li key={item.href}>
-                {item.ready ? (
-                  <Link
-                    aria-current={active ? "page" : undefined}
-                    className={classes}
-                    href={item.href}
-                    onClick={onClose}
-                  >
-                    <Icon aria-hidden="true" className="size-4" />
-                    <span className="truncate">{item.label}</span>
-                  </Link>
-                ) : (
-                  <span
-                    aria-disabled="true"
-                    className={cn(classes, "cursor-not-allowed opacity-55 hover:bg-transparent")}
-                    title="Disponível em uma próxima etapa"
-                  >
-                    <Icon aria-hidden="true" className="size-4" />
-                    <span className="truncate">{item.label}</span>
-                  </span>
-                )}
+                <Link
+                  aria-current={active ? "page" : undefined}
+                  className={classes}
+                  href={item.href}
+                  onClick={onClose}
+                >
+                  <Icon aria-hidden="true" className="size-4" />
+                  <span className="truncate">{item.label}</span>
+                </Link>
               </li>
             );
           })}

@@ -2,6 +2,7 @@
 
 import { type ReactNode, useEffect, useState } from "react";
 
+import { AdminBreadcrumbProvider } from "@/components/admin/admin-breadcrumbs";
 import { AdminNavbar } from "@/components/admin/admin-navbar";
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
 
@@ -33,13 +34,14 @@ export function AdminShell({ children, user }: AdminShellProps) {
   }, [menuOpen]);
 
   return (
-    <div className="min-h-screen bg-muted/30 lg:grid lg:grid-cols-[15rem_minmax(0,1fr)]">
-      <div className="sticky top-0 hidden h-screen lg:block">
-        <AdminSidebar />
-      </div>
+    <AdminBreadcrumbProvider>
+      <div className="min-h-screen bg-muted/30 lg:grid lg:grid-cols-[15rem_minmax(0,1fr)]">
+        <div className="sticky top-0 hidden h-screen lg:block">
+          <AdminSidebar />
+        </div>
 
-      {menuOpen ? (
-        <div className="fixed inset-0 z-50 lg:hidden">
+        {menuOpen ? (
+          <div className="fixed inset-0 z-50 lg:hidden">
           <button
             aria-label="Fechar menu"
             className="absolute inset-0 bg-foreground/35"
@@ -49,15 +51,16 @@ export function AdminShell({ children, user }: AdminShellProps) {
           <div className="relative h-full w-[min(15rem,85vw)] shadow-xl">
             <AdminSidebar mobile onClose={() => setMenuOpen(false)} />
           </div>
-        </div>
-      ) : null}
+          </div>
+        ) : null}
 
-      <div className="min-w-0">
-        <AdminNavbar onOpenMenu={() => setMenuOpen(true)} user={user} />
-        <main className="mx-auto w-full max-w-7xl p-4 sm:p-6 lg:p-8">
-          {children}
-        </main>
+        <div className="min-w-0">
+          <AdminNavbar onOpenMenu={() => setMenuOpen(true)} user={user} />
+          <main className="mx-auto w-full max-w-7xl p-4 sm:p-6 lg:p-8">
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+    </AdminBreadcrumbProvider>
   );
 }
