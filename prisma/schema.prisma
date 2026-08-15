@@ -109,6 +109,7 @@ model Lesson {
   slug        String        @db.VarChar(160)
   description String?       @db.Text
   content     String?       @db.Text
+  imageUrl    String?       @db.VarChar(2048)
   order       Int
   status      ContentStatus @default(DRAFT)
   createdAt   DateTime      @default(now()) @db.Timestamptz(3)

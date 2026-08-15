@@ -1,4 +1,4 @@
-import { Pencil, Plus } from "lucide-react";
+import { BookOpenText, Pencil, Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -35,6 +35,7 @@ export default async function ModulesPage({ params, searchParams }: ModulesPageP
       modules: {
         orderBy: { order: "asc" },
         select: {
+          _count: { select: { lessons: true } },
           description: true,
           id: true,
           order: true,
@@ -78,7 +79,7 @@ export default async function ModulesPage({ params, searchParams }: ModulesPageP
             </Link>
           </>
         }
-        description={`Organize os módulos da disciplina ${subject.title} sem antecipar aulas ou conteúdo.`}
+        description={`Organize os módulos da disciplina ${subject.title} e acesse suas aulas.`}
         eyebrow={subject.course.title}
         title="Módulos"
       />
@@ -112,7 +113,9 @@ export default async function ModulesPage({ params, searchParams }: ModulesPageP
                       <h2 className="font-semibold">{module.title}</h2>
                       <ContentStatusBadge status={module.status} />
                     </div>
-                    <p className="mt-1 text-sm text-muted-foreground">{module.slug}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {module.slug} · {module._count.lessons} aula(s)
+                    </p>
                     {module.description ? (
                       <p className="mt-2 line-clamp-2 text-sm leading-6 text-muted-foreground">
                         {module.description}
@@ -120,7 +123,7 @@ export default async function ModulesPage({ params, searchParams }: ModulesPageP
                     ) : null}
                   </div>
                 </div>
-                <div className="flex items-center justify-end gap-1">
+                <div className="flex flex-wrap items-center justify-end gap-1">
                   <OrderControls
                     downAction={moveModuleAction.bind(
                       null,
@@ -139,6 +142,13 @@ export default async function ModulesPage({ params, searchParams }: ModulesPageP
                       "up",
                     )}
                   />
+                  <Link
+                    className={buttonVariants({ variant: "outline" })}
+                    href={`${base}/${module.id}/lessons`}
+                  >
+                    <BookOpenText aria-hidden="true" />
+                    Aulas
+                  </Link>
                   <Link
                     aria-label={`Editar ${module.title}`}
                     className={buttonVariants({ size: "icon", variant: "ghost" })}

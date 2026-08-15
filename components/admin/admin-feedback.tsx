@@ -6,6 +6,12 @@ const successMessages: Record<string, string> = {
   "course-published": "Curso publicado.",
   "course-unpublished": "Curso movido para rascunho.",
   "course-updated": "Curso atualizado com sucesso.",
+  "lesson-archived": "Aula arquivada.",
+  "lesson-created": "Aula criada como rascunho.",
+  "lesson-published": "Aula publicada.",
+  "lesson-reordered": "Ordem das aulas atualizada.",
+  "lesson-unpublished": "Aula movida para rascunho.",
+  "lesson-updated": "Aula atualizada com sucesso.",
   "module-archived": "Módulo arquivado.",
   "module-created": "Módulo criado com sucesso.",
   "module-published": "Módulo publicado.",
@@ -23,6 +29,7 @@ const successMessages: Record<string, string> = {
 
 const errorMessages: Record<string, string> = {
   "invalid-hierarchy": "A entidade não pertence à hierarquia informada.",
+  "lesson-content-required": "Adicione conteúdo antes de publicar a aula.",
   "reorder-failed": "Não foi possível atualizar a ordem. Tente novamente.",
   "status-update": "Não foi possível alterar o status.",
 };

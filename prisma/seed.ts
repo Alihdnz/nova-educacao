@@ -168,6 +168,18 @@ async function main() {
       },
     },
     update: {
+      content: `## Economia e escolhas
+
+A Economia estuda como pessoas e sociedades decidem usar **recursos escassos**.
+
+- necessidades humanas;
+- recursos disponíveis;
+- escolhas e consequências.
+
+Leia também o [portal do Banco Central](https://www.bcb.gov.br/) para conhecer indicadores econômicos.`,
+      description: "Apresentação do objeto de estudo da Economia.",
+      imageUrl:
+        "https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?auto=format&fit=crop&w=1600&q=80",
       title: "O que é Economia?",
       order: 1,
       status: ContentStatus.PUBLISHED,
@@ -177,8 +189,17 @@ async function main() {
       title: "O que é Economia?",
       slug: "o-que-e-economia",
       description: "Apresentação do objeto de estudo da Economia.",
-      content:
-        "A Economia estuda como pessoas e sociedades alocam recursos escassos.",
+      content: `## Economia e escolhas
+
+A Economia estuda como pessoas e sociedades decidem usar **recursos escassos**.
+
+- necessidades humanas;
+- recursos disponíveis;
+- escolhas e consequências.
+
+Leia também o [portal do Banco Central](https://www.bcb.gov.br/) para conhecer indicadores econômicos.`,
+      imageUrl:
+        "https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?auto=format&fit=crop&w=1600&q=80",
       order: 1,
       status: ContentStatus.PUBLISHED,
     },
@@ -192,6 +213,16 @@ async function main() {
       },
     },
     update: {
+      content: `## Recursos limitados
+
+Escassez existe porque os recursos disponíveis não atendem a todos os desejos ao mesmo tempo.
+
+> Escolher uma alternativa significa abrir mão de outra.
+
+---
+
+Essa relação orienta decisões de famílias, empresas e governos.`,
+      description: "A relação entre recursos limitados e decisões.",
       title: "Escassez e escolha",
       order: 2,
       status: ContentStatus.PUBLISHED,
@@ -201,8 +232,58 @@ async function main() {
       title: "Escassez e escolha",
       slug: "escassez-e-escolha",
       description: "A relação entre recursos limitados e decisões.",
+      content: `## Recursos limitados
+
+Escassez existe porque os recursos disponíveis não atendem a todos os desejos ao mesmo tempo.
+
+> Escolher uma alternativa significa abrir mão de outra.
+
+---
+
+Essa relação orienta decisões de famílias, empresas e governos.`,
       order: 2,
       status: ContentStatus.PUBLISHED,
+    },
+  });
+
+  await prisma.lesson.upsert({
+    where: {
+      moduleId_slug: {
+        moduleId: fundamentalsModule.id,
+        slug: "agentes-economicos",
+      },
+    },
+    update: {
+      content: `## Quem toma decisões econômicas?
+
+Os principais agentes são:
+
+1. famílias;
+2. empresas;
+3. governo.
+
+Cada agente possui objetivos e restrições diferentes.`,
+      description: "Visão inicial dos agentes que participam da economia.",
+      order: 3,
+      status: ContentStatus.DRAFT,
+      title: "Agentes econômicos",
+    },
+    create: {
+      moduleId: fundamentalsModule.id,
+      title: "Agentes econômicos",
+      slug: "agentes-economicos",
+      description: "Visão inicial dos agentes que participam da economia.",
+      content: `## Quem toma decisões econômicas?
+
+Os principais agentes são:
+
+1. famílias;
+2. empresas;
+3. governo.
+
+Cada agente possui objetivos e restrições diferentes.`,
+      order: 3,
+      status: ContentStatus.DRAFT,
     },
   });
 
@@ -214,6 +295,10 @@ async function main() {
       },
     },
     update: {
+      content: `## Comparando alternativas
+
+O custo de oportunidade representa o valor da melhor alternativa abandonada ao fazer uma escolha.`,
+      description: "Como comparar escolhas e alternativas disponíveis.",
       title: "Custo de oportunidade",
       order: 1,
       status: ContentStatus.PUBLISHED,
@@ -222,6 +307,10 @@ async function main() {
       moduleId: basicConceptsModule.id,
       title: "Custo de oportunidade",
       slug: "custo-de-oportunidade",
+      description: "Como comparar escolhas e alternativas disponíveis.",
+      content: `## Comparando alternativas
+
+O custo de oportunidade representa o valor da melhor alternativa abandonada ao fazer uma escolha.`,
       order: 1,
       status: ContentStatus.PUBLISHED,
     },
@@ -235,6 +324,10 @@ async function main() {
       },
     },
     update: {
+      content: `## Demanda
+
+A demanda relaciona as quantidades que consumidores desejam adquirir aos diferentes níveis de preço.`,
+      description: "Primeiro contato com o conceito de demanda.",
       title: "Introdução à demanda",
       order: 1,
       status: ContentStatus.PUBLISHED,
@@ -243,6 +336,10 @@ async function main() {
       moduleId: supplyDemandModule.id,
       title: "Introdução à demanda",
       slug: "introducao-a-demanda",
+      description: "Primeiro contato com o conceito de demanda.",
+      content: `## Demanda
+
+A demanda relaciona as quantidades que consumidores desejam adquirir aos diferentes níveis de preço.`,
       order: 1,
       status: ContentStatus.PUBLISHED,
     },

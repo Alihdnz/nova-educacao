@@ -28,8 +28,10 @@ export function AdminNavbar({ onOpenMenu, user }: AdminNavbarProps) {
       >
         <Menu aria-hidden="true" />
       </Button>
-      <AdminBreadcrumbs />
-      <div className="ml-auto flex min-w-0 items-center gap-2 sm:gap-3">
+      <div className="min-w-0 flex-1 overflow-hidden">
+        <AdminBreadcrumbs />
+      </div>
+      <div className="flex shrink-0 items-center gap-2 sm:gap-3">
         <div className="hidden min-w-0 text-right md:block">
           <p className="max-w-48 truncate text-sm font-medium">{user.name}</p>
           <p className="max-w-48 truncate text-xs text-muted-foreground">

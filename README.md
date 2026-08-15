@@ -9,6 +9,7 @@ Plataforma de pré-curso com domínio educacional persistido, autenticação por
 - Tailwind CSS 4 e shadcn/ui com Base UI
 - Better Auth 1.6 com adaptador Prisma
 - Prisma ORM 7.9 com PostgreSQL
+- react-markdown 10 para renderização segura do conteúdo das aulas
 
 ## Requisitos
 
@@ -77,7 +78,8 @@ npx prisma db seed
 Histórico atual:
 
 - `20260814192047_init_educational_domain`: domínio educacional da Sprint 04;
-- `20260814195346_add_authentication`: campos e tabelas centrais do Better Auth.
+- `20260814195346_add_authentication`: campos e tabelas centrais do Better Auth;
+- `20260815003348_add_lesson_image`: imagem principal opcional das aulas.
 
 Use `prisma migrate deploy` em produção. `prisma migrate reset` apaga os dados e só pode ser usado em um banco local descartável.
 
@@ -115,19 +117,29 @@ O painel gestor possui dashboard com totais de cursos, cursos publicados, discip
 | `/admin/courses/[courseId]/subjects/[subjectId]/modules` | Gerenciar módulos da disciplina |
 | `/admin/courses/[courseId]/subjects/[subjectId]/modules/new` | Criar módulo na disciplina atual |
 | `/admin/courses/[courseId]/subjects/[subjectId]/modules/[moduleId]/edit` | Editar módulo validando toda a hierarquia |
+| `/admin/courses/[courseId]/subjects/[subjectId]/modules/[moduleId]/lessons` | Listar e ordenar aulas do módulo |
+| `/admin/courses/[courseId]/subjects/[subjectId]/modules/[moduleId]/lessons/new` | Criar aula em rascunho |
+| `/admin/courses/[courseId]/subjects/[subjectId]/modules/[moduleId]/lessons/[lessonId]/edit` | Editar conteúdo e metadados da aula |
+| `/admin/courses/[courseId]/subjects/[subjectId]/modules/[moduleId]/lessons/[lessonId]/preview` | Visualizar a aula como conteúdo renderizado |
 
-Cursos, disciplinas e módulos oferecem criação, edição, listagem, publicação, despublicação e arquivamento. Não há exclusão física nesses fluxos. Todas as mutações são Server Actions explícitas e executam `requireAdmin()` antes de validar ou persistir dados.
+Cursos, disciplinas, módulos e aulas oferecem criação, edição, listagem, publicação, despublicação e arquivamento. Não há exclusão física nesses fluxos. Todas as mutações são Server Actions explícitas e executam `requireAdmin()` antes de validar ou persistir dados.
 
 ### Publicação e vínculos
 
 Cada entidade usa individualmente o enum `ContentStatus`: `DRAFT`, `PUBLISHED` ou `ARCHIVED`. Alterar o status de um pai não publica, despublica, arquiva ou remove seus filhos.
 
-Uma disciplina recebe o `courseId` da rota e só pode ser manipulada dentro desse curso. Um módulo recebe `courseId` e `subjectId` do contexto e as consultas confirmam que a disciplina pertence ao curso e que o módulo pertence à disciplina. Combinações inválidas são rejeitadas no servidor.
+Uma disciplina recebe o `courseId` da rota e só pode ser manipulada dentro desse curso. Módulos e aulas recebem toda a hierarquia da rota, e as consultas confirmam os vínculos `Course > Subject > Module > Lesson`. Combinações inválidas são rejeitadas no servidor.
+
+### Conteúdo de aulas
+
+O campo `Lesson.content` armazena Markdown CommonMark. O editor administrativo oferece comandos para títulos, ênfase, listas, citações, links, separadores e imagens incorporadas, além de alternância imediata entre edição e preview.
+
+O renderer usa `react-markdown`, ignora HTML bruto e restringe links e imagens aos protocolos HTTP e HTTPS. A imagem principal fica separada no campo opcional `Lesson.imageUrl`; não existe upload de arquivos nesta sprint. Novas aulas são sempre criadas como `DRAFT`, e publicação, despublicação e arquivamento exigem ações explícitas.
 
 ### Ordenação
 
-Disciplinas são ordenadas dentro do curso e módulos dentro da disciplina. Os controles movem um item uma posição por vez. A troca ocorre em transação serializável, usa uma posição temporária positiva e respeita as constraints únicas e de ordem positiva existentes no banco.
+Disciplinas são ordenadas dentro do curso, módulos dentro da disciplina e aulas dentro do módulo. Os controles movem um item uma posição por vez. A troca ocorre em transação serializável, usa uma posição temporária positiva e respeita as constraints únicas e de ordem positiva existentes no banco.
 
 ## Escopo funcional
 
-A Sprint 06 cobre somente a estrutura `Course > Subject > Module`. Aulas, conteúdo, questões, avaliações, alunos, matrículas, progresso, gamificação, relatórios e gestão de `COURSE_MANAGER` não possuem CRUD administrativo nesta etapa.
+A Sprint 07 cobre o CMS administrativo da estrutura `Course > Subject > Module > Lesson`. A experiência do estudante para consumir aulas, questões, avaliações, matrículas, progresso, gamificação, relatórios e gestão de `COURSE_MANAGER` permanecem fora do escopo.
