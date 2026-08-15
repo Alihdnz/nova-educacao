@@ -39,6 +39,8 @@ async function main() {
   const course = await prisma.course.upsert({
     where: { slug: "economia" },
     update: {
+      coverImageUrl:
+        "https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?auto=format&fit=crop&w=1600&q=80",
       title: "Economia",
       description: "Curso introdutório de Economia.",
       status: ContentStatus.PUBLISHED,
@@ -47,6 +49,8 @@ async function main() {
       title: "Economia",
       slug: "economia",
       description: "Curso introdutório de Economia.",
+      coverImageUrl:
+        "https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?auto=format&fit=crop&w=1600&q=80",
       status: ContentStatus.PUBLISHED,
     },
   });
@@ -285,6 +289,35 @@ Os principais agentes são:
 Cada agente possui objetivos e restrições diferentes.`,
       order: 3,
       status: ContentStatus.DRAFT,
+    },
+  });
+
+  await prisma.lesson.upsert({
+    where: {
+      moduleId_slug: {
+        moduleId: basicConceptsModule.id,
+        slug: "incentivos-e-decisoes",
+      },
+    },
+    update: {
+      content: `## Incentivos
+
+Incentivos alteram custos e benefícios percebidos e podem influenciar escolhas econômicas.`,
+      description: "Como incentivos influenciam decisões econômicas.",
+      order: 2,
+      status: ContentStatus.ARCHIVED,
+      title: "Incentivos e decisões",
+    },
+    create: {
+      moduleId: basicConceptsModule.id,
+      title: "Incentivos e decisões",
+      slug: "incentivos-e-decisoes",
+      description: "Como incentivos influenciam decisões econômicas.",
+      content: `## Incentivos
+
+Incentivos alteram custos e benefícios percebidos e podem influenciar escolhas econômicas.`,
+      order: 2,
+      status: ContentStatus.ARCHIVED,
     },
   });
 
@@ -601,6 +634,16 @@ A demanda relaciona as quantidades que consumidores desejam adquirir aos diferen
     },
   });
 
+  const studentWithoutEnrollment = await prisma.user.upsert({
+    where: { email: "aluno.sem.curso@example.com" },
+    update: { name: "Aluno sem curso", role: UserRole.STUDENT },
+    create: {
+      name: "Aluno sem curso",
+      email: "aluno.sem.curso@example.com",
+      role: UserRole.STUDENT,
+    },
+  });
+
   const manager = await prisma.user.upsert({
     where: { email: "gestor@example.com" },
     update: { name: "Gestor Exemplo", role: UserRole.COURSE_MANAGER },
@@ -639,6 +682,24 @@ A demanda relaciona as quantidades que consumidores desejam adquirir aos diferen
         accountId: student.id,
         providerId: "credential",
         userId: student.id,
+        password: studentPassword,
+      },
+    }),
+    prisma.account.upsert({
+      where: {
+        providerId_accountId: {
+          providerId: "credential",
+          accountId: studentWithoutEnrollment.id,
+        },
+      },
+      update: {
+        password: studentPassword,
+        userId: studentWithoutEnrollment.id,
+      },
+      create: {
+        accountId: studentWithoutEnrollment.id,
+        providerId: "credential",
+        userId: studentWithoutEnrollment.id,
         password: studentPassword,
       },
     }),

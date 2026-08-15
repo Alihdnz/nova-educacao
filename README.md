@@ -46,6 +46,7 @@ O seed cria credenciais idempotentes para:
 
 - `admin@example.com`, papel `ADMIN`, senha em `SEED_ADMIN_PASSWORD`;
 - `aluno@example.com`, papel `STUDENT`, senha em `SEED_STUDENT_PASSWORD`.
+- `aluno.sem.curso@example.com`, papel `STUDENT`, sem matrícula e com a senha em `SEED_STUDENT_PASSWORD`.
 
 Não existe cadastro público. O usuário `COURSE_MANAGER` permanece no domínio, mas não recebe acesso a `/admin` nesta sprint.
 
@@ -59,6 +60,7 @@ As regras atuais são:
 | --- | --- |
 | `/login` | Público; sessões existentes são redirecionadas para sua área |
 | `/student` | Somente `STUDENT` |
+| `/student/courses/**` | Somente `STUDENT` com matrícula válida e acesso à hierarquia publicada |
 | `/admin` | Somente `ADMIN` |
 | `/admin/courses/**` | Somente `ADMIN`; leituras e mutações validam a sessão no servidor |
 | `/forbidden` | Estado de acesso negado |
@@ -157,6 +159,22 @@ Avaliações pertencem a uma aula e referenciam questões existentes por `Assess
 
 Disciplinas são ordenadas dentro do curso, módulos dentro da disciplina, aulas e questões dentro da aula, e questões selecionadas dentro de cada avaliação. Os controles movem um item uma posição por vez. A troca ocorre em transação serializável, usa uma posição temporária positiva e respeita as constraints únicas e de ordem positiva existentes no banco.
 
+## Área do estudante
+
+O dashboard em `/student` lista somente cursos publicados associados a matrículas `ACTIVE` ou `COMPLETED`. Matrículas canceladas não concedem acesso. Cursos concluídos continuam disponíveis, e o estado vazio não oferece catálogo ou matrícula automática.
+
+O progresso exibido é derivado dos registros existentes de `Progress` por aula publicada. A plataforma não cria progresso ao abrir uma aula, não conclui conteúdo automaticamente e não altera XP, streak ou conquistas nesta etapa. A ação **Continuar estudando** prioriza uma aula `IN_PROGRESS`, depois a primeira aula ainda não concluída e, por fim, a primeira aula publicada disponível.
+
+| Rota | Finalidade |
+| --- | --- |
+| `/student` | Dashboard, cursos matriculados, progresso e continuação |
+| `/student/courses/[courseId]` | Visão do curso e disciplinas publicadas |
+| `/student/courses/[courseId]/subjects/[subjectId]` | Disciplina e módulos publicados |
+| `/student/courses/[courseId]/subjects/[subjectId]/modules/[moduleId]` | Módulo, aulas publicadas e estados de progresso |
+| `/student/courses/[courseId]/subjects/[subjectId]/modules/[moduleId]/lessons/[lessonId]` | Conteúdo Markdown publicado da aula |
+
+Cada página valida no servidor a sessão, o papel `STUDENT`, a matrícula, o vínculo completo `Course > Subject > Module > Lesson` e o status `PUBLISHED` de todos os níveis consultados. IDs manipulados, conteúdo não publicado e recursos fora da matrícula retornam o mesmo estado de conteúdo indisponível, sem revelar dados parciais. Listagens carregam apenas metadados; o campo `Lesson.content` é consultado somente na página da aula.
+
 ## Escopo funcional
 
-A Sprint 08 cobre o gerenciamento administrativo da estrutura `Course > Subject > Module > Lesson > Question/Assessment`. A execução de questões e avaliações pelo estudante, timer real, correção, resultados, progresso, gamificação, relatórios e gestão de `COURSE_MANAGER` permanecem fora do escopo.
+A Sprint 09 cobre o dashboard do estudante, navegação `Course > Subject > Module > Lesson`, bloqueios server-side, consumo de conteúdo publicado e visualização do progresso já persistido. Matrícula pelo aluno, catálogo, execução de avaliações, timer, correção, resultados, atualização automática de progresso, gamificação, certificados e relatórios permanecem fora do escopo.
