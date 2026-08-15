@@ -1,7 +1,7 @@
 "use client";
 
 import { AlertDialog } from "@base-ui/react/alert-dialog";
-import { Archive, Eye, EyeOff, LoaderCircle } from "lucide-react";
+import { Archive, Eye, EyeOff, LoaderCircle, Trash2 } from "lucide-react";
 import { useFormStatus } from "react-dom";
 
 import { buttonVariants } from "@/components/ui/button";
@@ -10,13 +10,14 @@ import { cn } from "@/lib/utils";
 type ConfirmActionProps = {
   action: () => Promise<void>;
   description: string;
-  kind: "archive" | "publish" | "unpublish";
+  kind: "archive" | "publish" | "remove" | "unpublish";
   title: string;
 };
 
 const labels = {
   archive: "Arquivar",
   publish: "Publicar",
+  remove: "Remover",
   unpublish: "Despublicar",
 } as const;
 
@@ -24,7 +25,9 @@ function ConfirmSubmit({ kind }: { kind: ConfirmActionProps["kind"] }) {
   const { pending } = useFormStatus();
   return (
     <button
-      className={buttonVariants({ variant: kind === "archive" ? "destructive" : "default" })}
+      className={buttonVariants({
+        variant: kind === "archive" || kind === "remove" ? "destructive" : "default",
+      })}
       disabled={pending}
       type="submit"
     >
@@ -35,12 +38,15 @@ function ConfirmSubmit({ kind }: { kind: ConfirmActionProps["kind"] }) {
 }
 
 export function ConfirmAction({ action, description, kind, title }: ConfirmActionProps) {
-  const Icon = kind === "archive" ? Archive : kind === "publish" ? Eye : EyeOff;
+  const Icon =
+    kind === "archive" ? Archive : kind === "remove" ? Trash2 : kind === "publish" ? Eye : EyeOff;
 
   return (
     <AlertDialog.Root>
       <AlertDialog.Trigger
-        className={buttonVariants({ variant: kind === "archive" ? "destructive" : "outline" })}
+        className={buttonVariants({
+          variant: kind === "archive" || kind === "remove" ? "destructive" : "outline",
+        })}
       >
         <Icon aria-hidden="true" />
         {labels[kind]}

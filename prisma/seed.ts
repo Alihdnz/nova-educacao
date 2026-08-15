@@ -9,6 +9,7 @@ import {
   EnrollmentStatus,
   PrismaClient,
   ProgressStatus,
+  QuestionDifficulty,
   QuestionType,
   UserRole,
   XPReason,
@@ -348,6 +349,9 @@ A demanda relaciona as quantidades que consumidores desejam adquirir aos diferen
   const scarcityQuestion = await prisma.question.upsert({
     where: { id: "seed-question-scarcity" },
     update: {
+      difficulty: QuestionDifficulty.EASY,
+      explanation:
+        "A escassez surge porque os recursos são limitados, enquanto necessidades e desejos são amplos.",
       lessonId: economyLesson.id,
       prompt: "O que caracteriza a escassez econômica?",
       type: QuestionType.SINGLE_CHOICE,
@@ -356,6 +360,9 @@ A demanda relaciona as quantidades que consumidores desejam adquirir aos diferen
     },
     create: {
       id: "seed-question-scarcity",
+      difficulty: QuestionDifficulty.EASY,
+      explanation:
+        "A escassez surge porque os recursos são limitados, enquanto necessidades e desejos são amplos.",
       lessonId: economyLesson.id,
       prompt: "O que caracteriza a escassez econômica?",
       type: QuestionType.SINGLE_CHOICE,
@@ -367,6 +374,9 @@ A demanda relaciona as quantidades que consumidores desejam adquirir aos diferen
   const choicesQuestion = await prisma.question.upsert({
     where: { id: "seed-question-choices" },
     update: {
+      difficulty: QuestionDifficulty.MEDIUM,
+      explanation:
+        "Escolher implica renunciar à melhor alternativa disponível, conceito chamado custo de oportunidade.",
       lessonId: economyLesson.id,
       prompt: "Toda escolha econômica envolve abrir mão de uma alternativa.",
       type: QuestionType.TRUE_FALSE,
@@ -375,6 +385,9 @@ A demanda relaciona as quantidades que consumidores desejam adquirir aos diferen
     },
     create: {
       id: "seed-question-choices",
+      difficulty: QuestionDifficulty.MEDIUM,
+      explanation:
+        "Escolher implica renunciar à melhor alternativa disponível, conceito chamado custo de oportunidade.",
       lessonId: economyLesson.id,
       prompt: "Toda escolha econômica envolve abrir mão de uma alternativa.",
       type: QuestionType.TRUE_FALSE,
@@ -457,10 +470,60 @@ A demanda relaciona as quantidades que consumidores desejam adquirir aos diferen
     },
   });
 
+  const opportunityQuestion = await prisma.question.upsert({
+    where: { id: "seed-question-opportunity" },
+    update: {
+      difficulty: QuestionDifficulty.HARD,
+      explanation:
+        "O custo de oportunidade corresponde ao valor da melhor alternativa abandonada.",
+      lessonId: economyLesson.id,
+      order: 3,
+      prompt: "Ao escolher investir em um curso, qual elemento representa o custo de oportunidade?",
+      status: ContentStatus.DRAFT,
+      type: QuestionType.SINGLE_CHOICE,
+    },
+    create: {
+      id: "seed-question-opportunity",
+      difficulty: QuestionDifficulty.HARD,
+      explanation:
+        "O custo de oportunidade corresponde ao valor da melhor alternativa abandonada.",
+      lessonId: economyLesson.id,
+      order: 3,
+      prompt: "Ao escolher investir em um curso, qual elemento representa o custo de oportunidade?",
+      status: ContentStatus.DRAFT,
+      type: QuestionType.SINGLE_CHOICE,
+    },
+  });
+
+  await prisma.answer.upsert({
+    where: { questionId_order: { questionId: opportunityQuestion.id, order: 1 } },
+    update: { isCorrect: true, text: "O valor da melhor alternativa abandonada." },
+    create: {
+      isCorrect: true,
+      order: 1,
+      questionId: opportunityQuestion.id,
+      text: "O valor da melhor alternativa abandonada.",
+    },
+  });
+
+  await prisma.answer.upsert({
+    where: { questionId_order: { questionId: opportunityQuestion.id, order: 2 } },
+    update: { isCorrect: false, text: "Somente o preço pago pelo curso." },
+    create: {
+      isCorrect: false,
+      order: 2,
+      questionId: opportunityQuestion.id,
+      text: "Somente o preço pago pelo curso.",
+    },
+  });
+
   const assessment = await prisma.assessment.upsert({
     where: { slug: "avaliacao-fundamentos-economia" },
     update: {
+      description: "Avaliação introdutória sobre escassez e escolhas.",
       lessonId: economyLesson.id,
+      maxScore: 10,
+      timeLimitMinutes: 20,
       title: "Avaliação de fundamentos de Economia",
       status: ContentStatus.PUBLISHED,
     },
@@ -469,6 +532,8 @@ A demanda relaciona as quantidades que consumidores desejam adquirir aos diferen
       title: "Avaliação de fundamentos de Economia",
       slug: "avaliacao-fundamentos-economia",
       description: "Avaliação introdutória sobre escassez e escolhas.",
+      maxScore: 10,
+      timeLimitMinutes: 20,
       status: ContentStatus.PUBLISHED,
     },
   });
@@ -480,12 +545,12 @@ A demanda relaciona as quantidades que consumidores desejam adquirir aos diferen
         questionId: scarcityQuestion.id,
       },
     },
-    update: { order: 1, weight: 1 },
+    update: { order: 1, weight: 5 },
     create: {
       assessmentId: assessment.id,
       questionId: scarcityQuestion.id,
       order: 1,
-      weight: 1,
+      weight: 5,
     },
   });
 
@@ -496,12 +561,33 @@ A demanda relaciona as quantidades que consumidores desejam adquirir aos diferen
         questionId: choicesQuestion.id,
       },
     },
-    update: { order: 2, weight: 1 },
+    update: { order: 2, weight: 5 },
     create: {
       assessmentId: assessment.id,
       questionId: choicesQuestion.id,
       order: 2,
-      weight: 1,
+      weight: 5,
+    },
+  });
+
+  await prisma.assessment.upsert({
+    where: { slug: "revisao-de-conceitos-economicos" },
+    update: {
+      description: "Avaliação em preparação para revisar os conceitos da aula.",
+      lessonId: economyLesson.id,
+      maxScore: 10,
+      status: ContentStatus.DRAFT,
+      timeLimitMinutes: null,
+      title: "Revisão de conceitos econômicos",
+    },
+    create: {
+      description: "Avaliação em preparação para revisar os conceitos da aula.",
+      lessonId: economyLesson.id,
+      maxScore: 10,
+      slug: "revisao-de-conceitos-economicos",
+      status: ContentStatus.DRAFT,
+      timeLimitMinutes: null,
+      title: "Revisão de conceitos econômicos",
     },
   });
 
@@ -644,7 +730,7 @@ A demanda relaciona as quantidades que consumidores desejam adquirir aos diferen
     },
     update: {
       status: AttemptStatus.SUBMITTED,
-      score: 2,
+      score: 10,
       submittedAt: new Date("2026-08-01T12:45:00.000Z"),
     },
     create: {
@@ -652,7 +738,7 @@ A demanda relaciona as quantidades que consumidores desejam adquirir aos diferen
       assessmentId: assessment.id,
       attemptNumber: 1,
       status: AttemptStatus.SUBMITTED,
-      score: 2,
+      score: 10,
       startedAt: new Date("2026-08-01T12:35:00.000Z"),
       submittedAt: new Date("2026-08-01T12:45:00.000Z"),
     },
@@ -753,17 +839,19 @@ A demanda relaciona as quantidades que consumidores desejam adquirir aos diferen
     },
   });
 
-  const [courses, subjects, modules, lessons, questions, users] =
+  const [courses, subjects, modules, lessons, questions, answers, assessments, users] =
     await Promise.all([
       prisma.course.count(),
       prisma.subject.count(),
       prisma.module.count(),
       prisma.lesson.count(),
       prisma.question.count(),
+      prisma.answer.count(),
+      prisma.assessment.count(),
       prisma.user.count(),
     ]);
 
-  console.log({ courses, subjects, modules, lessons, questions, users });
+  console.log({ courses, subjects, modules, lessons, questions, answers, assessments, users });
 }
 
 main()

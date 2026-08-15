@@ -79,7 +79,8 @@ Histórico atual:
 
 - `20260814192047_init_educational_domain`: domínio educacional da Sprint 04;
 - `20260814195346_add_authentication`: campos e tabelas centrais do Better Auth;
-- `20260815003348_add_lesson_image`: imagem principal opcional das aulas.
+- `20260815003348_add_lesson_image`: imagem principal opcional das aulas;
+- `20260815013231_add_question_assessment_management`: dificuldade e explicação das questões, nota máxima e tempo limite das avaliações.
 
 Use `prisma migrate deploy` em produção. `prisma migrate reset` apaga os dados e só pode ser usado em um banco local descartável.
 
@@ -121,14 +122,18 @@ O painel gestor possui dashboard com totais de cursos, cursos publicados, discip
 | `/admin/courses/[courseId]/subjects/[subjectId]/modules/[moduleId]/lessons/new` | Criar aula em rascunho |
 | `/admin/courses/[courseId]/subjects/[subjectId]/modules/[moduleId]/lessons/[lessonId]/edit` | Editar conteúdo e metadados da aula |
 | `/admin/courses/[courseId]/subjects/[subjectId]/modules/[moduleId]/lessons/[lessonId]/preview` | Visualizar a aula como conteúdo renderizado |
+| `/admin/courses/[courseId]/subjects/[subjectId]/modules/[moduleId]/lessons/[lessonId]/questions` | Gerenciar questões e alternativas da aula |
+| `/admin/courses/[courseId]/subjects/[subjectId]/modules/[moduleId]/lessons/[lessonId]/questions/[questionId]` | Visualizar questão, resposta correta e explicação |
+| `/admin/courses/[courseId]/subjects/[subjectId]/modules/[moduleId]/lessons/[lessonId]/assessments` | Gerenciar avaliações da aula |
+| `/admin/courses/[courseId]/subjects/[subjectId]/modules/[moduleId]/lessons/[lessonId]/assessments/[assessmentId]` | Selecionar, ordenar e configurar questões da avaliação |
 
-Cursos, disciplinas, módulos e aulas oferecem criação, edição, listagem, publicação, despublicação e arquivamento. Não há exclusão física nesses fluxos. Todas as mutações são Server Actions explícitas e executam `requireAdmin()` antes de validar ou persistir dados.
+Cursos, disciplinas, módulos, aulas, questões e avaliações oferecem criação, edição, listagem, publicação, despublicação e arquivamento. Não há exclusão física de questões ou avaliações. Todas as mutações são Server Actions explícitas e executam `requireAdmin()` antes de validar ou persistir dados.
 
 ### Publicação e vínculos
 
 Cada entidade usa individualmente o enum `ContentStatus`: `DRAFT`, `PUBLISHED` ou `ARCHIVED`. Alterar o status de um pai não publica, despublica, arquiva ou remove seus filhos.
 
-Uma disciplina recebe o `courseId` da rota e só pode ser manipulada dentro desse curso. Módulos e aulas recebem toda a hierarquia da rota, e as consultas confirmam os vínculos `Course > Subject > Module > Lesson`. Combinações inválidas são rejeitadas no servidor.
+Uma disciplina recebe o `courseId` da rota e só pode ser manipulada dentro desse curso. Módulos, aulas, questões e avaliações recebem toda a hierarquia da rota, e as consultas confirmam os vínculos `Course > Subject > Module > Lesson > Question/Assessment`. Combinações inválidas são rejeitadas no servidor.
 
 ### Conteúdo de aulas
 
@@ -136,10 +141,22 @@ O campo `Lesson.content` armazena Markdown CommonMark. O editor administrativo o
 
 O renderer usa `react-markdown`, ignora HTML bruto e restringe links e imagens aos protocolos HTTP e HTTPS. A imagem principal fica separada no campo opcional `Lesson.imageUrl`; não existe upload de arquivos nesta sprint. Novas aulas são sempre criadas como `DRAFT`, e publicação, despublicação e arquivamento exigem ações explícitas.
 
+### Questões e alternativas
+
+Questões pertencem a uma aula, utilizam `SINGLE_CHOICE` ou `TRUE_FALSE` e possuem dificuldade `EASY`, `MEDIUM` ou `HARD`. Alternativas permanecem no modelo `Answer`, com ordem e exatamente uma resposta correta. Escolha única aceita de duas a oito alternativas; verdadeiro ou falso exige duas.
+
+O enunciado é tratado como texto simples, sem HTML. A explicação é administrativa durante esta sprint, mas obrigatória para publicar. Remover uma alternativa já referenciada por `AttemptAnswer` é rejeitado para preservar o histórico.
+
+### Avaliações
+
+Avaliações pertencem a uma aula e referenciam questões existentes por `AssessmentQuestion`, sem copiar seu conteúdo. A mesma questão pode participar de várias avaliações, com ordem e peso independentes em cada uma. A seleção lista somente questões da aula atual.
+
+`Assessment.maxScore` define a nota máxima e `timeLimitMinutes` representa um limite opcional entre 1 e 1.440 minutos. Para publicar, a avaliação precisa ter ao menos uma questão publicada e válida, e a soma dos pesos positivos deve ser exatamente igual à nota máxima. Alterações estruturais em conteúdo publicado retornam a entidade afetada para rascunho; avaliações publicadas dependentes de uma questão alterada também voltam para rascunho.
+
 ### Ordenação
 
-Disciplinas são ordenadas dentro do curso, módulos dentro da disciplina e aulas dentro do módulo. Os controles movem um item uma posição por vez. A troca ocorre em transação serializável, usa uma posição temporária positiva e respeita as constraints únicas e de ordem positiva existentes no banco.
+Disciplinas são ordenadas dentro do curso, módulos dentro da disciplina, aulas e questões dentro da aula, e questões selecionadas dentro de cada avaliação. Os controles movem um item uma posição por vez. A troca ocorre em transação serializável, usa uma posição temporária positiva e respeita as constraints únicas e de ordem positiva existentes no banco.
 
 ## Escopo funcional
 
-A Sprint 07 cobre o CMS administrativo da estrutura `Course > Subject > Module > Lesson`. A experiência do estudante para consumir aulas, questões, avaliações, matrículas, progresso, gamificação, relatórios e gestão de `COURSE_MANAGER` permanecem fora do escopo.
+A Sprint 08 cobre o gerenciamento administrativo da estrutura `Course > Subject > Module > Lesson > Question/Assessment`. A execução de questões e avaliações pelo estudante, timer real, correção, resultados, progresso, gamificação, relatórios e gestão de `COURSE_MANAGER` permanecem fora do escopo.

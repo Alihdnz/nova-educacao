@@ -1,4 +1,4 @@
-import { Eye, FileCheck2, FileText, Pencil, Plus } from "lucide-react";
+import { ClipboardCheck, Eye, FileCheck2, FileQuestion, FileText, Pencil, Plus } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -35,6 +35,7 @@ export default async function LessonsPage({ params, searchParams }: LessonsPageP
       lessons: {
         orderBy: { order: "asc" },
         select: {
+          _count: { select: { assessments: true, questions: true } },
           content: true,
           description: true,
           id: true,
@@ -149,11 +150,13 @@ export default async function LessonsPage({ params, searchParams }: LessonsPageP
                           )}
                           {lesson.content?.trim() ? "Com conteúdo" : "Sem conteúdo"}
                         </span>
+                        <span>{lesson._count.questions} questão(ões)</span>
+                        <span>{lesson._count.assessments} avaliação(ões)</span>
                         <span>Atualizada em {lesson.updatedAt.toLocaleDateString("pt-BR")}</span>
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center justify-end gap-1">
+                  <div className="flex flex-wrap items-center justify-end gap-1">
                     <OrderControls
                       downAction={moveLessonAction.bind(
                         null,
@@ -189,6 +192,20 @@ export default async function LessonsPage({ params, searchParams }: LessonsPageP
                       title="Editar aula"
                     >
                       <Pencil aria-hidden="true" />
+                    </Link>
+                    <Link
+                      className={buttonVariants({ variant: "outline" })}
+                      href={`${base}/${lesson.id}/questions`}
+                    >
+                      <FileQuestion aria-hidden="true" />
+                      Questões
+                    </Link>
+                    <Link
+                      className={buttonVariants({ variant: "outline" })}
+                      href={`${base}/${lesson.id}/assessments`}
+                    >
+                      <ClipboardCheck aria-hidden="true" />
+                      Avaliações
                     </Link>
                   </div>
                 </div>
@@ -229,4 +246,3 @@ export default async function LessonsPage({ params, searchParams }: LessonsPageP
     </div>
   );
 }
-

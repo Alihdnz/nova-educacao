@@ -18,6 +18,12 @@ enum QuestionType {
   TRUE_FALSE
 }
 
+enum QuestionDifficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
 enum UserRole {
   STUDENT
   ADMIN
@@ -130,6 +136,8 @@ model Question {
   lessonId            String?
   prompt              String               @db.Text
   type                QuestionType
+  difficulty          QuestionDifficulty   @default(MEDIUM)
+  explanation         String?              @db.Text
   order               Int?
   status              ContentStatus        @default(DRAFT)
   createdAt           DateTime             @default(now()) @db.Timestamptz(3)
@@ -159,17 +167,19 @@ model Answer {
 }
 
 model Assessment {
-  id          String               @id @default(cuid())
-  lessonId    String?
-  title       String               @db.VarChar(160)
-  slug        String               @unique @db.VarChar(160)
-  description String?              @db.Text
-  status      ContentStatus        @default(DRAFT)
-  createdAt   DateTime             @default(now()) @db.Timestamptz(3)
-  updatedAt   DateTime             @updatedAt @db.Timestamptz(3)
-  lesson      Lesson?              @relation(fields: [lessonId], references: [id], onDelete: Restrict)
-  questions   AssessmentQuestion[]
-  attempts    Attempt[]
+  id               String               @id @default(cuid())
+  lessonId         String?
+  title            String               @db.VarChar(160)
+  slug             String               @unique @db.VarChar(160)
+  description      String?              @db.Text
+  maxScore         Decimal              @default(10) @db.Decimal(6, 2)
+  timeLimitMinutes Int?
+  status           ContentStatus        @default(DRAFT)
+  createdAt        DateTime             @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime             @updatedAt @db.Timestamptz(3)
+  lesson           Lesson?              @relation(fields: [lessonId], references: [id], onDelete: Restrict)
+  questions        AssessmentQuestion[]
+  attempts         Attempt[]
 
   @@index([lessonId, status])
 }
