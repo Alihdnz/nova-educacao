@@ -1,38 +1,96 @@
-import { BookOpenText } from "lucide-react";
-import Link from "next/link";
+"use client";
 
+import { Menu, UserRound, X } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useState } from "react";
+
+import { NovaLogo } from "@/components/brand/nova-logo";
 import { Container } from "@/components/layout/container";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+
+const navigation = [
+  { href: "/", label: "Início" },
+  { href: "/courses", label: "Cursos" },
+  { href: "/how-it-works", label: "Como funciona" },
+  { href: "/about", label: "Sobre nós" },
+] as const;
 
 export function SiteHeader() {
-  return (
-    <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/85">
-      <Container className="flex h-16 items-center justify-between gap-4">
-        <Link
-          href="/"
-          className="flex min-w-0 items-center gap-2 font-semibold focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-        >
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <BookOpenText aria-hidden="true" className="size-4" />
-          </span>
-          <span className="truncate">Nova Educação</span>
-        </Link>
+  const pathname = usePathname();
+  const [open, setOpen] = useState(false);
 
-        <nav className="flex items-center gap-1" aria-label="Navegação principal">
-          <Link
-            href="/"
-            className="rounded-md px-2 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-          >
-            Início
-          </Link>
+  return (
+    <header className="sticky top-0 z-50 border-b border-white/10 bg-[rgb(3_8_28/88%)] backdrop-blur-xl">
+      <Container className="flex min-h-18 items-center justify-between gap-4 py-3">
+        <NovaLogo className="w-28 sm:w-32" href="/" inverted priority />
+
+        <nav className="hidden items-center gap-1 md:flex" aria-label="Navegação principal">
+          {navigation.map((item) => (
+            <Link
+              aria-current={pathname === item.href ? "page" : undefined}
+              className={cn(
+                "nova-focus rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                pathname === item.href
+                  ? "bg-white/8 text-white"
+                  : "text-white/70 hover:bg-white/6 hover:text-white",
+              )}
+              href={item.href}
+              key={item.href}
+            >
+              {item.label}
+            </Link>
+          ))}
+        </nav>
+
+        <div className="flex items-center gap-2">
           <Link
             href="/login"
-            className={buttonVariants({ variant: "outline" })}
+            className={buttonVariants({
+              className:
+                "border-cyan-400/70 bg-transparent text-white hover:border-cyan-300 hover:bg-cyan-400/10 hover:text-white",
+              variant: "outline",
+            })}
           >
-            Entrar
+            <UserRound aria-hidden="true" />
+            <span className="hidden sm:inline">Login do Aluno</span>
+            <span className="sm:hidden">Entrar</span>
           </Link>
-        </nav>
+          <Button
+            aria-expanded={open}
+            aria-label={open ? "Fechar menu" : "Abrir menu"}
+            className="text-white hover:bg-white/10 hover:text-white md:hidden"
+            onClick={() => setOpen((current) => !current)}
+            size="icon"
+            variant="ghost"
+          >
+            {open ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}
+          </Button>
+        </div>
       </Container>
+
+      {open ? (
+        <nav className="border-t border-white/10 px-4 py-3 md:hidden" aria-label="Navegação móvel">
+          <ul className="mx-auto grid max-w-6xl gap-1">
+            {navigation.map((item) => (
+              <li key={item.href}>
+                <Link
+                  aria-current={pathname === item.href ? "page" : undefined}
+                  className={cn(
+                    "nova-focus block rounded-lg px-4 py-3 text-sm font-semibold",
+                    pathname === item.href ? "bg-white/10 text-white" : "text-white/75 hover:bg-white/6 hover:text-white",
+                  )}
+                  href={item.href}
+                  onClick={() => setOpen(false)}
+                >
+                  {item.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      ) : null}
     </header>
   );
 }

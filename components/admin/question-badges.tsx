@@ -2,9 +2,9 @@ import type { QuestionDifficultyValue, QuestionTypeValue } from "@/lib/question-
 import { cn } from "@/lib/utils";
 
 const difficultyConfig = {
-  EASY: { className: "border-emerald-200 bg-emerald-50 text-emerald-800", label: "Fácil" },
+  EASY: { className: "border-accent/25 bg-accent/10 text-[var(--nova-success)]", label: "Fácil" },
   HARD: { className: "border-rose-200 bg-rose-50 text-rose-800", label: "Difícil" },
-  MEDIUM: { className: "border-amber-200 bg-amber-50 text-amber-800", label: "Média" },
+  MEDIUM: { className: "border-[var(--nova-warning)]/20 bg-[color-mix(in_srgb,var(--nova-warning)_10%,transparent)] text-[var(--nova-warning)]", label: "Média" },
 } as const;
 
 const typeLabels = {
@@ -23,7 +23,7 @@ export function QuestionDifficultyBadge({ difficulty }: { difficulty: QuestionDi
 
 export function QuestionTypeBadge({ type }: { type: QuestionTypeValue }) {
   return (
-    <span className="inline-flex h-6 items-center rounded-full border border-sky-200 bg-sky-50 px-2 text-xs font-medium text-sky-800">
+    <span className="inline-flex h-6 items-center rounded-full border border-primary/20 bg-primary/8 px-2 text-xs font-medium text-primary">
       {typeLabels[type]}
     </span>
   );

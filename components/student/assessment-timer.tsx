@@ -69,7 +69,7 @@ export function AssessmentTimer({
         {pending ? (
           <LoaderCircle aria-hidden="true" className="size-4 animate-spin" />
         ) : (
-          <Clock3 aria-hidden="true" className="size-4 text-sky-700" />
+          <Clock3 aria-hidden="true" className="size-4 text-primary" />
         )}
         {seconds > 0 ? (
           <>

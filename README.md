@@ -47,6 +47,7 @@ O seed cria credenciais idempotentes para:
 - `admin@example.com`, papel `ADMIN`, senha em `SEED_ADMIN_PASSWORD`;
 - `aluno@example.com`, papel `STUDENT`, senha em `SEED_STUDENT_PASSWORD`.
 - `aluno.sem.curso@example.com`, papel `STUDENT`, sem matrícula e com a senha em `SEED_STUDENT_PASSWORD`.
+- `aluno.isolado@example.com`, papel `STUDENT`, com progresso e tentativa próprios e a senha em `SEED_STUDENT_PASSWORD`.
 
 Não existe cadastro público. O usuário `COURSE_MANAGER` permanece no domínio, mas não recebe acesso a `/admin` nesta sprint.
 
@@ -107,13 +108,59 @@ O seed não roda automaticamente durante o deploy. Execute `npx prisma db seed` 
 | `npm run lint` | ESLint |
 | `npx prisma db seed` | Seed idempotente do domínio e das credenciais |
 
+## Identidade visual NOVA
+
+A interface utiliza os assets oficiais de `public/assets`, com a marca NOVA e a
+tagline "Conhecimento que move você". O favicon é configurado a partir do asset
+oficial e os logos não são reconstruídos em CSS.
+
+- Sora é a fonte de títulos e métricas; Manrope é a fonte de texto e interface.
+- A configuração central fica em `app/globals.css`, incluindo os tokens de cor,
+  radius, sombras, estados semânticos e transições.
+- `components/brand/nova-logo.tsx` concentra o uso responsivo da marca.
+- `Card`, `StatCard` e `ProgressRing` formam a base visual reutilizável das telas.
+- Aluno e gestor usam sidebar no desktop e navegação inferior no mobile.
+- Violeta identifica ações e estados ativos; turquesa identifica progresso e
+  sucesso. Valores de sistema não devem ser repetidos diretamente nas páginas.
+
+Os protótipos oficiais estão em `docs/design/prototypes`, separados entre
+desktop e mobile. Eles orientam hierarquia e composição sem substituir as
+regras de domínio e os dados reais da aplicação.
+
+## Navegação pública
+
+A landing page em `/` apresenta a NOVA Educação como plataforma de cursos
+livres e utiliza somente cursos `PUBLISHED` do banco nos destaques. O visitante
+pode percorrer o catálogo e visualizar a estrutura publicada de um curso, mas
+o conteúdo das aulas e avaliações continua protegido por autenticação, papel e
+matrícula.
+
+| Rota | Finalidade |
+| --- | --- |
+| `/` | Landing page, áreas de conhecimento, destaques e CTAs |
+| `/courses` | Catálogo público de cursos publicados |
+| `/courses/[courseId]` | Apresentação e estrutura pública do curso |
+| `/about` | Apresentação institucional da NOVA |
+| `/how-it-works` | Etapas da jornada de aprendizagem |
+| `/login` | Autenticação única para aluno e gestor |
+
+O login do aluno permanece evidente no header. O acesso do gestor fica
+discretamente no footer e aponta para `/login?role=admin`; essa escolha é apenas
+de UX e não substitui `requireAdmin`, sessão, role ou as validações server-side.
+
 ## Estrutura administrativa
 
-O painel gestor possui dashboard com totais de cursos, cursos publicados, disciplinas e módulos. A navegação ativa contém somente **Dashboard** e **Cursos**.
+O painel gestor possui dashboard com totais de estudantes, cursos publicados,
+aulas publicadas e avaliações. A navegação apresenta somente destinos reais:
+**Painel geral**, **Cursos**, **Questões** e **Avaliações**. Módulos e aulas
+continuam acessíveis dentro da hierarquia do curso, sem atalhos que simulem uma
+rota global inexistente.
 
 | Rota | Finalidade |
 | --- | --- |
 | `/admin/courses` | Listar cursos e acessar sua estrutura |
+| `/admin/questions` | Índice de questões e acesso ao contexto da aula |
+| `/admin/assessments` | Índice de avaliações e acesso ao gerenciamento hierárquico |
 | `/admin/courses/new` | Criar curso |
 | `/admin/courses/[courseId]` | Visualizar curso, alterar status e gerenciar disciplinas |
 | `/admin/courses/[courseId]/edit` | Editar curso |
@@ -165,13 +212,17 @@ Disciplinas são ordenadas dentro do curso, módulos dentro da disciplina, aulas
 
 O dashboard em `/student` lista somente cursos publicados associados a matrículas `ACTIVE` ou `COMPLETED`. Matrículas canceladas não concedem acesso. Cursos concluídos continuam disponíveis, e o estado vazio não oferece catálogo ou matrícula automática.
 
-O progresso exibido é derivado dos registros de `Progress` por aula publicada. A plataforma não cria progresso ao abrir uma aula nem conclui conteúdo automaticamente. O estudante pode marcar explicitamente uma aula como concluída; a Server Action valida novamente sessão, matrícula, hierarquia e publicação antes de criar ou atualizar o registro de progresso de forma idempotente. Essa ação não altera XP, streak, conquistas ou o status da matrícula.
+O progresso exibido é derivado dos registros de `Progress` por aula publicada. A plataforma não cria progresso ao abrir uma aula. O estudante pode marcar explicitamente uma aula como concluída; a Server Action valida novamente sessão, matrícula, hierarquia e publicação antes de criar ou atualizar o registro de forma idempotente. Ao concluir a última aula publicada, a mesma ação marca a matrícula como `COMPLETED`; ela não altera XP, streak ou conquistas.
 
-A página da aula permite navegar para o conteúdo publicado anterior ou seguinte na sequência global do curso. A ação **Continuar estudando** prioriza uma aula `IN_PROGRESS`, depois a primeira aula ainda não concluída e, por fim, a primeira aula publicada disponível.
+A página da aula permite navegar para o conteúdo publicado anterior ou seguinte na sequência global do curso. A ação **Continuar estudando** utiliza a primeira aula publicada ainda não concluída, respeitando a ordem de disciplina, módulo e aula.
 
 | Rota | Finalidade |
 | --- | --- |
 | `/student` | Dashboard, cursos matriculados, progresso e continuação |
+| `/student/courses` | Todos os cursos matriculados e ação de continuidade |
+| `/student/progress` | Progresso consolidado e detalhamento por curso |
+| `/student/exercises` | Avaliações disponíveis, tentativas em andamento e resultados |
+| `/student/profile` | Dados de acesso e resumo de aprendizagem em modo de consulta |
 | `/student/courses/[courseId]` | Visão do curso e disciplinas publicadas |
 | `/student/courses/[courseId]/subjects/[subjectId]` | Disciplina e módulos publicados |
 | `/student/courses/[courseId]/subjects/[subjectId]/modules/[moduleId]` | Módulo, aulas publicadas e estados de progresso |
@@ -192,6 +243,29 @@ A submissão altera a `Attempt` de `IN_PROGRESS` para `SUBMITTED` e persiste not
 
 Quando há limite de tempo, a expiração deriva de `startedAt` mais o limite copiado para a tentativa. O contador do navegador é apenas visual e é reconstruído após refresh; toda resposta e submissão revalidam o prazo no servidor. Ao expirar, as respostas já salvas são corrigidas e a tentativa é finalizada com segurança. Avaliações sem limite não exibem contador.
 
+### Progresso consolidado
+
+O dashboard consolida somente matrículas `ACTIVE` ou `COMPLETED` do estudante autenticado. A estrutura considerada contém exclusivamente curso, disciplinas, módulos e aulas publicados. Não existem tabelas de progresso para curso, disciplina ou módulo: esses estados são derivados do `Progress` das aulas pertencentes à própria matrícula.
+
+As regras são:
+
+- uma aula é concluída somente quando seu `Progress.status` é `COMPLETED`; `NOT_STARTED` e `IN_PROGRESS` não contam como conclusão;
+- módulo, disciplina e curso utilizam `aulas concluídas / aulas publicadas * 100`, sem calcular médias entre níveis com quantidades diferentes de aulas;
+- percentuais são arredondados para até duas casas decimais; estruturas sem aulas possuem 0% e não são consideradas concluídas;
+- módulo e disciplina são concluídos quando todas as suas aulas publicadas estão concluídas;
+- ao concluir a última aula publicada de um curso, a Server Action atualiza a matrícula para `Enrollment.status = COMPLETED` e preenche `completedAt`; não existe ação paralela de conclusão;
+- o progresso geral utiliza a soma de todas as aulas concluídas dividida pela soma das aulas publicadas das matrículas, portanto cursos maiores contribuem proporcionalmente;
+- a próxima atividade é a primeira aula publicada ainda não concluída, respeitando a hierarquia e sua ordenação.
+
+Avaliações são métricas complementares e não alteram o percentual de aulas. Uma avaliação é considerada realizada quando possui ao menos uma `Attempt` `SUBMITTED`. O dashboard preserva a quantidade de tentativas, usa a tentativa submetida mais recente como último resultado e o maior percentual persistido como melhor resultado. A média exibida é a média aritmética dos percentuais de todas as tentativas submetidas, sem misturar notas absolutas de escalas diferentes.
+
+Questões respondidas correspondem aos registros de `AttemptAnswer` das tentativas submetidas. Acertos utilizam o snapshot histórico `AttemptAnswer.isCorrect = true`; as demais respostas persistidas contam como incorretas. O aproveitamento é `acertos / respostas * 100`, também arredondado para até duas casas decimais. Notas, percentuais e aprovação são lidos dos snapshots da `Attempt` e não recalculados.
+
+O carregamento consolidado fica em `lib/student-progress.ts` e usa uma única chamada Prisma para buscar as matrículas autorizadas com estrutura, progressos e tentativas relacionadas. Os cálculos são compartilhados pelo dashboard e pelas páginas de curso, disciplina e módulo, evitando consultas por item e divergências de fórmula.
+
 ## Escopo funcional
 
-A Sprint 12 implementa iniciar ou retomar uma avaliação, persistir respostas, controlar prazo, corrigir no servidor e preservar/exibir resultados de tentativas. Matrícula pelo aluno, catálogo, limites complexos de tentativa, revisão detalhada, consolidação de progresso de curso/disciplina/módulo, gamificação, certificados e relatórios permanecem fora do escopo.
+A Sprint 13.2 consolida a identidade visual, a landing page, o catálogo público
+e a navegação real das áreas pública, administrativa e do estudante. Matrícula
+pelo aluno, gamificação, certificados, recomendações e analytics permanecem
+fora do escopo.

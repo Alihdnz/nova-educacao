@@ -1,17 +1,18 @@
 import { ProgressStatus } from "@/lib/generated/prisma/client";
+import { formatPercentage } from "@/lib/student-progress-calculation";
 import { cn } from "@/lib/utils";
 
 const statusConfig = {
   [ProgressStatus.NOT_STARTED]: {
-    className: "border-zinc-200 bg-zinc-50 text-zinc-700",
+    className: "border-border bg-muted text-muted-foreground",
     label: "Não iniciada",
   },
   [ProgressStatus.IN_PROGRESS]: {
-    className: "border-sky-200 bg-sky-50 text-sky-800",
+    className: "border-primary/15 bg-primary/8 text-primary",
     label: "Em andamento",
   },
   [ProgressStatus.COMPLETED]: {
-    className: "border-emerald-200 bg-emerald-50 text-emerald-800",
+    className: "border-accent/25 bg-accent/12 text-[var(--nova-success)]",
     label: "Concluída",
   },
 } as const;
@@ -48,7 +49,9 @@ export function StudentProgressBar({
         <span className="text-muted-foreground">
           {total === 0 ? "Nenhuma aula disponível" : `${completed} de ${total} aula(s)`}
         </span>
-        <span className="font-semibold tabular-nums">{value}%</span>
+        <span className="font-semibold tabular-nums">
+          {formatPercentage(value)}
+        </span>
       </div>
       <div
         aria-label={`Progresso: ${value}%`}
@@ -59,7 +62,7 @@ export function StudentProgressBar({
         role="progressbar"
       >
         <div
-          className="h-full rounded-full bg-emerald-600 transition-[width]"
+          className="h-full rounded-full bg-primary transition-[width]"
           style={{ width: `${value}%` }}
         />
       </div>

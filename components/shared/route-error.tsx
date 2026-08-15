@@ -17,7 +17,7 @@ export function RouteError({ error, retry }: RouteErrorProps) {
 
   return (
     <section
-      className="flex min-h-72 flex-col items-center justify-center rounded-lg border bg-background px-6 py-10 text-center"
+      className="nova-surface flex min-h-72 flex-col items-center justify-center px-6 py-10 text-center"
       aria-labelledby="route-error-title"
     >
       <span className="flex size-11 items-center justify-center rounded-lg bg-destructive/10 text-destructive">

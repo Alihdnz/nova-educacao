@@ -48,7 +48,7 @@ type PageProps = {
 
 function metric(label: string, value: string) {
   return (
-    <div className="bg-background p-4">
+    <div className="bg-card p-5">
       <p className="text-xs text-muted-foreground">{label}</p>
       <p className="mt-1 text-lg font-semibold tabular-nums">{value}</p>
     </div>
@@ -82,7 +82,7 @@ export default async function StudentAssessmentPage({
   const startAction = startAssessmentAction.bind(null, route);
 
   return (
-    <Container className="py-8 sm:py-10">
+    <Container className="max-w-[96rem] py-6 sm:py-8">
       <div className="space-y-8">
         <StudentBreadcrumbs
           items={[
@@ -162,7 +162,7 @@ function AssessmentOverview({
   );
 
   return (
-    <div className="mx-auto max-w-4xl space-y-8">
+    <div className="mx-auto max-w-6xl space-y-8">
       <header className="border-b pb-8">
         <p className="text-sm font-medium text-muted-foreground">Avaliação</p>
         <h1 className="mt-2 text-2xl font-semibold sm:text-3xl">
@@ -176,7 +176,7 @@ function AssessmentOverview({
 
       <section
         aria-label="Configuração da avaliação"
-        className="grid gap-px overflow-hidden rounded-lg border bg-border sm:grid-cols-2 lg:grid-cols-4"
+        className="nova-surface grid gap-px overflow-hidden bg-border sm:grid-cols-2 lg:grid-cols-4"
       >
         {metric("Questões", String(data.questionCount))}
         {metric("Nota máxima", data.assessment.maxScore)}
@@ -234,7 +234,7 @@ function AssessmentOverview({
             Nenhuma tentativa finalizada.
           </p>
         ) : (
-          <div className="divide-y overflow-hidden rounded-lg border bg-background">
+          <div className="nova-surface divide-y overflow-hidden">
             {submittedAttempts.map((attempt) => (
               <article
                 className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
@@ -288,7 +288,7 @@ function AssessmentExecution({
   );
 
   return (
-    <div className="mx-auto max-w-4xl space-y-8">
+    <div className="mx-auto max-w-5xl space-y-8">
       <header className="border-b pb-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm font-medium text-muted-foreground">
@@ -325,7 +325,7 @@ function AssessmentExecution({
       <section className="space-y-5" aria-label="Questões da avaliação">
         {data.questions.map((question, index) => (
           <article
-            className="rounded-lg border bg-background p-4 sm:p-6"
+            className="nova-surface p-4 sm:p-6"
             key={question.id}
           >
             <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
@@ -386,7 +386,7 @@ function AssessmentResult({
     data.attempt.passed ?? Number(percentage) >= Number(passingPercentage);
 
   return (
-    <div className="mx-auto max-w-4xl space-y-8">
+    <div className="mx-auto max-w-6xl space-y-8">
       <header className="border-b pb-8">
         <p className="text-sm font-medium text-muted-foreground">
           Resultado da tentativa {data.attempt.attemptNumber}
@@ -397,7 +397,7 @@ function AssessmentResult({
         <div
           className={
             passed
-              ? "mt-5 inline-flex items-center gap-2 text-base font-semibold text-emerald-700"
+              ? "mt-5 inline-flex items-center gap-2 text-base font-semibold text-[var(--nova-success)]"
               : "mt-5 inline-flex items-center gap-2 text-base font-semibold text-destructive"
           }
         >
@@ -412,7 +412,7 @@ function AssessmentResult({
 
       <section
         aria-label="Resultado da avaliação"
-        className="grid gap-px overflow-hidden rounded-lg border bg-border sm:grid-cols-2 lg:grid-cols-4"
+        className="nova-surface grid gap-px overflow-hidden bg-border sm:grid-cols-2 lg:grid-cols-4"
       >
         {metric("Nota", `${score} de ${maxScore}`)}
         {metric("Percentual", `${percentage}%`)}

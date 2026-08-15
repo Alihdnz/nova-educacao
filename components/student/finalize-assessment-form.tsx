@@ -32,13 +32,13 @@ export function FinalizeAssessmentForm({
   return (
     <form action={formAction} className="space-y-3 border-t pt-6">
       {unanswered > 0 ? (
-        <p className="flex items-start gap-2 text-sm text-amber-800">
+        <p className="flex items-start gap-2 text-sm text-[var(--nova-warning)]">
           <TriangleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
           Você possui questões não respondidas. Elas serão consideradas
           incorretas, mas a finalização continua permitida.
         </p>
       ) : (
-        <p className="text-sm text-emerald-700">
+        <p className="text-sm text-[var(--nova-success)]">
           Todas as {total} questões foram respondidas.
         </p>
       )}

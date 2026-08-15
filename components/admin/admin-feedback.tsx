@@ -71,7 +71,7 @@ export function AdminFeedback({ error, success }: { error?: string; success?: st
       className={
         isError
           ? "flex items-start gap-3 rounded-md border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive"
-          : "flex items-start gap-3 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900"
+          : "flex items-start gap-3 rounded-md border border-accent/25 bg-accent/10 px-4 py-3 text-sm text-[var(--nova-success)]"
       }
       role={isError ? "alert" : "status"}
     >

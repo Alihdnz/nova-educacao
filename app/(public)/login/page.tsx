@@ -1,8 +1,8 @@
-import { BookOpenText } from "lucide-react";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { LoginForm } from "@/components/auth/login-form";
+import { NovaLogo } from "@/components/brand/nova-logo";
 import { getSession } from "@/lib/auth-guards";
 
 export const metadata: Metadata = {
@@ -27,19 +27,17 @@ export default async function LoginPage() {
   return (
     <div className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-md items-center px-4 py-10 sm:px-6">
       <section
-        className="w-full rounded-lg border bg-card p-6 shadow-sm sm:p-8"
+        className="nova-surface w-full p-6 shadow-[var(--nova-shadow-md)] sm:p-8"
         aria-labelledby="login-title"
       >
         <div className="mb-7 space-y-4">
-          <span className="flex size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <BookOpenText aria-hidden="true" className="size-5" />
-          </span>
+          <NovaLogo className="w-36" href="/" inverted priority />
           <div className="space-y-1.5">
             <h1 id="login-title" className="text-2xl font-semibold">
-              Acesse sua conta
+              Acesse a NOVA
             </h1>
             <p className="text-sm leading-6 text-muted-foreground">
-              Use as credenciais fornecidas pela administração da plataforma.
+              Continue sua jornada de conhecimento com as credenciais fornecidas pela plataforma.
             </p>
           </div>
         </div>

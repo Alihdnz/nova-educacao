@@ -55,7 +55,7 @@ export default async function CoursesPage({ searchParams }: { searchParams: Cour
       <AdminFeedback error={error} success={success} />
 
       {courses.length === 0 ? (
-        <section className="rounded-lg border bg-background">
+        <section className="nova-surface">
           <EmptyState
             action={
               <Link className={buttonVariants()} href="/admin/courses/new">
@@ -69,7 +69,7 @@ export default async function CoursesPage({ searchParams }: { searchParams: Cour
           />
         </section>
       ) : (
-        <section className="overflow-hidden rounded-lg border bg-background" aria-label="Lista de cursos">
+        <section className="nova-surface overflow-hidden" aria-label="Lista de cursos">
           <div className="hidden grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_8rem_9rem_8rem] gap-4 border-b bg-muted/40 px-5 py-3 text-xs font-medium text-muted-foreground lg:grid">
             <span>Curso</span>
             <span>Slug</span>

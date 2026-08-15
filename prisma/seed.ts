@@ -379,6 +379,117 @@ A demanda relaciona as quantidades que consumidores desejam adquirir aos diferen
     },
   });
 
+  const financeCourse = await prisma.course.upsert({
+    where: { slug: "financas-pessoais" },
+    update: {
+      description: "Fundamentos para organizar decisões financeiras pessoais.",
+      status: ContentStatus.PUBLISHED,
+      title: "Finanças pessoais",
+    },
+    create: {
+      description: "Fundamentos para organizar decisões financeiras pessoais.",
+      slug: "financas-pessoais",
+      status: ContentStatus.PUBLISHED,
+      title: "Finanças pessoais",
+    },
+  });
+
+  const planningSubject = await prisma.subject.upsert({
+    where: {
+      courseId_slug: {
+        courseId: financeCourse.id,
+        slug: "planejamento-financeiro",
+      },
+    },
+    update: {
+      description: "Organização de receitas, despesas e objetivos.",
+      order: 1,
+      status: ContentStatus.PUBLISHED,
+      title: "Planejamento financeiro",
+    },
+    create: {
+      courseId: financeCourse.id,
+      description: "Organização de receitas, despesas e objetivos.",
+      order: 1,
+      slug: "planejamento-financeiro",
+      status: ContentStatus.PUBLISHED,
+      title: "Planejamento financeiro",
+    },
+  });
+
+  const budgetModule = await prisma.module.upsert({
+    where: {
+      subjectId_slug: {
+        slug: "orcamento-pessoal",
+        subjectId: planningSubject.id,
+      },
+    },
+    update: {
+      description: "Construção e acompanhamento de um orçamento simples.",
+      order: 1,
+      status: ContentStatus.PUBLISHED,
+      title: "Orçamento pessoal",
+    },
+    create: {
+      description: "Construção e acompanhamento de um orçamento simples.",
+      order: 1,
+      slug: "orcamento-pessoal",
+      status: ContentStatus.PUBLISHED,
+      subjectId: planningSubject.id,
+      title: "Orçamento pessoal",
+    },
+  });
+
+  const incomeLesson = await prisma.lesson.upsert({
+    where: {
+      moduleId_slug: {
+        moduleId: budgetModule.id,
+        slug: "mapeando-receitas",
+      },
+    },
+    update: {
+      content: "## Receitas\n\nMapeie todas as entradas recorrentes e eventuais do seu orçamento.",
+      description: "Identificação das fontes de renda.",
+      order: 1,
+      status: ContentStatus.PUBLISHED,
+      title: "Mapeando receitas",
+    },
+    create: {
+      content: "## Receitas\n\nMapeie todas as entradas recorrentes e eventuais do seu orçamento.",
+      description: "Identificação das fontes de renda.",
+      moduleId: budgetModule.id,
+      order: 1,
+      slug: "mapeando-receitas",
+      status: ContentStatus.PUBLISHED,
+      title: "Mapeando receitas",
+    },
+  });
+
+  const expenseLesson = await prisma.lesson.upsert({
+    where: {
+      moduleId_slug: {
+        moduleId: budgetModule.id,
+        slug: "organizando-despesas",
+      },
+    },
+    update: {
+      content: "## Despesas\n\nClassifique gastos fixos, variáveis e eventuais para acompanhar seu orçamento.",
+      description: "Classificação e acompanhamento de gastos.",
+      order: 2,
+      status: ContentStatus.PUBLISHED,
+      title: "Organizando despesas",
+    },
+    create: {
+      content: "## Despesas\n\nClassifique gastos fixos, variáveis e eventuais para acompanhar seu orçamento.",
+      description: "Classificação e acompanhamento de gastos.",
+      moduleId: budgetModule.id,
+      order: 2,
+      slug: "organizando-despesas",
+      status: ContentStatus.PUBLISHED,
+      title: "Organizando despesas",
+    },
+  });
+
   const scarcityQuestion = await prisma.question.upsert({
     where: { id: "seed-question-scarcity" },
     update: {
@@ -445,7 +556,7 @@ A demanda relaciona as quantidades que consumidores desejam adquirir aos diferen
     },
   });
 
-  await prisma.answer.upsert({
+  const unlimitedResourcesAnswer = await prisma.answer.upsert({
     where: {
       questionId_order: { questionId: scarcityQuestion.id, order: 2 },
     },
@@ -477,7 +588,7 @@ A demanda relaciona as quantidades que consumidores desejam adquirir aos diferen
     },
   });
 
-  await prisma.answer.upsert({
+  const falseAnswer = await prisma.answer.upsert({
     where: {
       questionId_order: { questionId: choicesQuestion.id, order: 1 },
     },
@@ -726,6 +837,16 @@ A demanda relaciona as quantidades que consumidores desejam adquirir aos diferen
     },
   });
 
+  const isolatedStudent = await prisma.user.upsert({
+    where: { email: "aluno.isolado@example.com" },
+    update: { name: "Aluno Isolado", role: UserRole.STUDENT },
+    create: {
+      email: "aluno.isolado@example.com",
+      name: "Aluno Isolado",
+      role: UserRole.STUDENT,
+    },
+  });
+
   const manager = await prisma.user.upsert({
     where: { email: "gestor@example.com" },
     update: { name: "Gestor Exemplo", role: UserRole.COURSE_MANAGER },
@@ -765,6 +886,24 @@ A demanda relaciona as quantidades que consumidores desejam adquirir aos diferen
         providerId: "credential",
         userId: student.id,
         password: studentPassword,
+      },
+    }),
+    prisma.account.upsert({
+      where: {
+        providerId_accountId: {
+          accountId: isolatedStudent.id,
+          providerId: "credential",
+        },
+      },
+      update: {
+        password: studentPassword,
+        userId: isolatedStudent.id,
+      },
+      create: {
+        accountId: isolatedStudent.id,
+        password: studentPassword,
+        providerId: "credential",
+        userId: isolatedStudent.id,
       },
     }),
     prisma.account.upsert({
@@ -814,7 +953,7 @@ A demanda relaciona as quantidades que consumidores desejam adquirir aos diferen
     where: {
       userId_courseId: { userId: student.id, courseId: course.id },
     },
-    update: { status: EnrollmentStatus.ACTIVE },
+    update: { completedAt: null, status: EnrollmentStatus.ACTIVE },
     create: {
       userId: student.id,
       courseId: course.id,
@@ -822,19 +961,66 @@ A demanda relaciona as quantidades que consumidores desejam adquirir aos diferen
     },
   });
 
+  const completedEnrollment = await prisma.enrollment.upsert({
+    where: {
+      userId_courseId: {
+        courseId: financeCourse.id,
+        userId: student.id,
+      },
+    },
+    update: {
+      completedAt: new Date("2026-08-05T15:00:00.000Z"),
+      enrolledAt: new Date("2026-08-05T12:00:00.000Z"),
+      status: EnrollmentStatus.COMPLETED,
+    },
+    create: {
+      completedAt: new Date("2026-08-05T15:00:00.000Z"),
+      courseId: financeCourse.id,
+      enrolledAt: new Date("2026-08-05T12:00:00.000Z"),
+      status: EnrollmentStatus.COMPLETED,
+      userId: student.id,
+    },
+  });
+
+  const isolatedEnrollment = await prisma.enrollment.upsert({
+    where: {
+      userId_courseId: {
+        courseId: course.id,
+        userId: isolatedStudent.id,
+      },
+    },
+    update: { completedAt: null, status: EnrollmentStatus.ACTIVE },
+    create: {
+      courseId: course.id,
+      status: EnrollmentStatus.ACTIVE,
+      userId: isolatedStudent.id,
+    },
+  });
+
   const transientAttempts = await prisma.attempt.findMany({
     where: {
-      enrollmentId: enrollment.id,
       OR: [
-        { assessmentId: assessment.id, attemptNumber: { gt: 1 } },
         {
-          assessmentId: {
-            in: [
-              draftAssessment.id,
-              untimedAssessment.id,
-              archivedAssessment.id,
-            ],
-          },
+          enrollmentId: enrollment.id,
+          OR: [
+            { assessmentId: assessment.id, attemptNumber: { gt: 1 } },
+            {
+              assessmentId: {
+                in: [
+                  draftAssessment.id,
+                  untimedAssessment.id,
+                  archivedAssessment.id,
+                ],
+              },
+            },
+          ],
+        },
+        {
+          enrollmentId: isolatedEnrollment.id,
+          OR: [
+            { assessmentId: { not: assessment.id } },
+            { attemptNumber: { gt: 1 } },
+          ],
         },
       ],
     },
@@ -847,6 +1033,27 @@ A demanda relaciona as quantidades que consumidores desejam adquirir aos diferen
     });
     await prisma.attempt.deleteMany({ where: { id: { in: transientAttemptIds } } });
   }
+
+  await Promise.all([
+    prisma.progress.deleteMany({
+      where: {
+        enrollmentId: enrollment.id,
+        lessonId: { notIn: [economyLesson.id, scarcityLesson.id] },
+      },
+    }),
+    prisma.progress.deleteMany({
+      where: {
+        enrollmentId: completedEnrollment.id,
+        lessonId: { notIn: [incomeLesson.id, expenseLesson.id] },
+      },
+    }),
+    prisma.progress.deleteMany({
+      where: {
+        enrollmentId: isolatedEnrollment.id,
+        lessonId: { not: economyLesson.id },
+      },
+    }),
+  ]);
 
   await prisma.progress.upsert({
     where: {
@@ -868,6 +1075,68 @@ A demanda relaciona as quantidades que consumidores desejam adquirir aos diferen
       completedAt: new Date("2026-08-01T12:30:00.000Z"),
     },
   });
+
+  await Promise.all([
+    prisma.progress.upsert({
+      where: {
+        enrollmentId_lessonId: {
+          enrollmentId: completedEnrollment.id,
+          lessonId: incomeLesson.id,
+        },
+      },
+      update: {
+        completedAt: new Date("2026-08-05T14:00:00.000Z"),
+        startedAt: new Date("2026-08-05T13:30:00.000Z"),
+        status: ProgressStatus.COMPLETED,
+      },
+      create: {
+        completedAt: new Date("2026-08-05T14:00:00.000Z"),
+        enrollmentId: completedEnrollment.id,
+        lessonId: incomeLesson.id,
+        startedAt: new Date("2026-08-05T13:30:00.000Z"),
+        status: ProgressStatus.COMPLETED,
+      },
+    }),
+    prisma.progress.upsert({
+      where: {
+        enrollmentId_lessonId: {
+          enrollmentId: completedEnrollment.id,
+          lessonId: expenseLesson.id,
+        },
+      },
+      update: {
+        completedAt: new Date("2026-08-05T15:00:00.000Z"),
+        startedAt: new Date("2026-08-05T14:10:00.000Z"),
+        status: ProgressStatus.COMPLETED,
+      },
+      create: {
+        completedAt: new Date("2026-08-05T15:00:00.000Z"),
+        enrollmentId: completedEnrollment.id,
+        lessonId: expenseLesson.id,
+        startedAt: new Date("2026-08-05T14:10:00.000Z"),
+        status: ProgressStatus.COMPLETED,
+      },
+    }),
+    prisma.progress.upsert({
+      where: {
+        enrollmentId_lessonId: {
+          enrollmentId: isolatedEnrollment.id,
+          lessonId: economyLesson.id,
+        },
+      },
+      update: {
+        completedAt: null,
+        startedAt: new Date("2026-08-03T10:00:00.000Z"),
+        status: ProgressStatus.IN_PROGRESS,
+      },
+      create: {
+        enrollmentId: isolatedEnrollment.id,
+        lessonId: economyLesson.id,
+        startedAt: new Date("2026-08-03T10:00:00.000Z"),
+        status: ProgressStatus.IN_PROGRESS,
+      },
+    }),
+  ]);
 
   await prisma.progress.upsert({
     where: {
@@ -945,6 +1214,80 @@ A demanda relaciona as quantidades que consumidores desejam adquirir aos diferen
       isCorrect: true,
     },
   });
+
+  const isolatedAttempt = await prisma.attempt.upsert({
+    where: {
+      enrollmentId_assessmentId_attemptNumber: {
+        assessmentId: assessment.id,
+        attemptNumber: 1,
+        enrollmentId: isolatedEnrollment.id,
+      },
+    },
+    update: {
+      correctAnswers: 0,
+      maxScoreSnapshot: 10,
+      passed: false,
+      passingPercentageSnapshot: 70,
+      percentage: 0,
+      score: 0,
+      status: AttemptStatus.SUBMITTED,
+      submittedAt: new Date("2026-08-03T10:30:00.000Z"),
+      timeLimitMinutesSnapshot: 20,
+      totalQuestions: 2,
+    },
+    create: {
+      assessmentId: assessment.id,
+      attemptNumber: 1,
+      correctAnswers: 0,
+      enrollmentId: isolatedEnrollment.id,
+      maxScoreSnapshot: 10,
+      passed: false,
+      passingPercentageSnapshot: 70,
+      percentage: 0,
+      score: 0,
+      startedAt: new Date("2026-08-03T10:15:00.000Z"),
+      status: AttemptStatus.SUBMITTED,
+      submittedAt: new Date("2026-08-03T10:30:00.000Z"),
+      timeLimitMinutesSnapshot: 20,
+      totalQuestions: 2,
+    },
+  });
+
+  await Promise.all([
+    prisma.attemptAnswer.upsert({
+      where: {
+        attemptId_questionId: {
+          attemptId: isolatedAttempt.id,
+          questionId: scarcityQuestion.id,
+        },
+      },
+      update: {
+        isCorrect: false,
+        selectedAnswerId: unlimitedResourcesAnswer.id,
+      },
+      create: {
+        attemptId: isolatedAttempt.id,
+        isCorrect: false,
+        questionId: scarcityQuestion.id,
+        selectedAnswerId: unlimitedResourcesAnswer.id,
+      },
+    }),
+    prisma.attemptAnswer.upsert({
+      where: {
+        attemptId_questionId: {
+          attemptId: isolatedAttempt.id,
+          questionId: choicesQuestion.id,
+        },
+      },
+      update: { isCorrect: false, selectedAnswerId: falseAnswer.id },
+      create: {
+        attemptId: isolatedAttempt.id,
+        isCorrect: false,
+        questionId: choicesQuestion.id,
+        selectedAnswerId: falseAnswer.id,
+      },
+    }),
+  ]);
 
   await prisma.attemptAnswer.upsert({
     where: {

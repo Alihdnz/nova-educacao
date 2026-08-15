@@ -22,7 +22,7 @@ export function CompleteLessonForm({
 
   if (completed) {
     return (
-      <p className="inline-flex items-center gap-2 text-sm font-medium text-emerald-700">
+      <p className="inline-flex items-center gap-2 text-sm font-medium text-[var(--nova-success)]">
         <CircleCheckBig aria-hidden="true" className="size-4" />
         Aula concluída
       </p>
@@ -44,7 +44,7 @@ export function CompleteLessonForm({
           className={
             state.status === "error"
               ? "text-sm text-destructive"
-              : "text-sm text-emerald-700"
+              : "text-sm text-[var(--nova-success)]"
           }
           role={state.status === "error" ? "alert" : "status"}
         >

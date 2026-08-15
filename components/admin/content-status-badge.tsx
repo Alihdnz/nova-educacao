@@ -2,11 +2,11 @@ import type { StructureStatus } from "@/lib/course-structure-validation";
 import { cn } from "@/lib/utils";
 
 const statusConfig = {
-  ARCHIVED: { label: "Arquivado", className: "border-zinc-300 bg-zinc-100 text-zinc-700" },
-  DRAFT: { label: "Rascunho", className: "border-amber-200 bg-amber-50 text-amber-800" },
+  ARCHIVED: { label: "Arquivado", className: "border-border bg-muted text-muted-foreground" },
+  DRAFT: { label: "Rascunho", className: "border-[var(--nova-warning)]/20 bg-[color-mix(in_srgb,var(--nova-warning)_10%,transparent)] text-[var(--nova-warning)]" },
   PUBLISHED: {
     label: "Publicado",
-    className: "border-emerald-200 bg-emerald-50 text-emerald-800",
+    className: "border-accent/25 bg-accent/12 text-[var(--nova-success)]",
   },
 } as const;
 

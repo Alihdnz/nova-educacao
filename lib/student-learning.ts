@@ -64,22 +64,15 @@ export function lessonStatus(
 export function progressSummary(
   lessonIds: string[],
   records: Map<string, ProgressStatus>,
-  enrollmentStatus?: EnrollmentStatus,
 ) {
   const total = lessonIds.length;
   const completed = lessonIds.filter(
     (lessonId) => records.get(lessonId) === ProgressStatus.COMPLETED,
   ).length;
-  const displayedCompleted =
-    enrollmentStatus === EnrollmentStatus.COMPLETED ? total : completed;
   const percentage =
-    enrollmentStatus === EnrollmentStatus.COMPLETED
-      ? 100
-      : total === 0
-        ? 0
-        : Math.round((completed / total) * 100);
+    total === 0 ? 0 : Math.round((completed / total) * 10000) / 100;
 
-  return { completed: displayedCompleted, percentage, total };
+  return { completed, percentage, total };
 }
 
 export function continuationLesson(
@@ -87,9 +80,6 @@ export function continuationLesson(
   records: Map<string, ProgressStatus>,
 ) {
   return (
-    lessons.find(
-      (lesson) => records.get(lesson.id) === ProgressStatus.IN_PROGRESS,
-    ) ??
     lessons.find(
       (lesson) => records.get(lesson.id) !== ProgressStatus.COMPLETED,
     ) ??

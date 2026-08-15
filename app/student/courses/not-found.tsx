@@ -8,7 +8,7 @@ import { buttonVariants } from "@/components/ui/button";
 export default function StudentContentNotFound() {
   return (
     <Container className="py-8 sm:py-10">
-      <section className="rounded-lg border bg-background">
+      <section className="nova-surface">
         <EmptyState
           action={
             <Link className={buttonVariants({ variant: "outline" })} href="/student">

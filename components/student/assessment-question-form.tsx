@@ -47,13 +47,13 @@ export function AssessmentQuestionForm({
           <label
             className={cn(
               "flex min-h-12 cursor-pointer items-start gap-3 rounded-md border bg-background p-3 text-sm leading-6 transition-colors hover:bg-muted/60",
-              answer.id === selectedAnswerId && "border-sky-300 bg-sky-50/60",
+              answer.id === selectedAnswerId && "border-primary/40 bg-primary/5",
               (disabled || pending) && "cursor-not-allowed opacity-70",
             )}
             key={answer.id}
           >
             <input
-              className="mt-1.5 size-4 shrink-0 accent-sky-700"
+              className="mt-1.5 size-4 shrink-0 accent-[var(--primary)]"
               defaultChecked={answer.id === selectedAnswerId}
               name="answerId"
               type="radio"
@@ -77,7 +77,7 @@ export function AssessmentQuestionForm({
         ) : state.message ? (
           <span
             className={
-              state.status === "error" ? "text-destructive" : "text-emerald-700"
+              state.status === "error" ? "text-destructive" : "text-[var(--nova-success)]"
             }
             role={state.status === "error" ? "alert" : "status"}
           >

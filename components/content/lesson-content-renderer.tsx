@@ -34,7 +34,7 @@ function SafeLink({ href, children, title }: ComponentPropsWithoutRef<'a'>) {
 
   return (
     <a
-      className="font-medium text-sky-700 underline decoration-sky-300 underline-offset-4 hover:text-sky-900"
+      className="font-medium text-primary underline decoration-primary/30 underline-offset-4 hover:text-primary/80"
       href={safeHref}
       rel="noopener noreferrer"
       target="_blank"
@@ -68,7 +68,7 @@ export function LessonContentRenderer({ content }: { content: string }) {
         components={{
           a: SafeLink,
           blockquote: ({ children }) => (
-            <blockquote className="my-5 border-l-4 border-sky-200 pl-4 text-muted-foreground">
+            <blockquote className="my-5 border-l-4 border-primary/25 pl-4 text-muted-foreground">
               {children}
             </blockquote>
           ),

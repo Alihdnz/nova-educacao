@@ -10,11 +10,11 @@ type EmptyStateProps = {
 
 export function EmptyState({ action, description, icon: Icon, title }: EmptyStateProps) {
   return (
-    <div className="flex min-h-44 flex-col items-center justify-center px-4 py-8 text-center">
-      <span className="flex size-10 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+    <div className="flex min-h-52 flex-col items-center justify-center px-5 py-10 text-center">
+      <span className="flex size-11 items-center justify-center rounded-lg bg-primary/8 text-primary">
         <Icon aria-hidden="true" className="size-5" />
       </span>
-      <h3 className="mt-4 text-sm font-semibold">{title}</h3>
+      <h3 className="mt-4 font-heading text-base font-semibold">{title}</h3>
       <p className="mt-1 max-w-sm text-sm leading-6 text-muted-foreground">
         {description}
       </p>
