@@ -163,7 +163,9 @@ Disciplinas são ordenadas dentro do curso, módulos dentro da disciplina, aulas
 
 O dashboard em `/student` lista somente cursos publicados associados a matrículas `ACTIVE` ou `COMPLETED`. Matrículas canceladas não concedem acesso. Cursos concluídos continuam disponíveis, e o estado vazio não oferece catálogo ou matrícula automática.
 
-O progresso exibido é derivado dos registros existentes de `Progress` por aula publicada. A plataforma não cria progresso ao abrir uma aula, não conclui conteúdo automaticamente e não altera XP, streak ou conquistas nesta etapa. A ação **Continuar estudando** prioriza uma aula `IN_PROGRESS`, depois a primeira aula ainda não concluída e, por fim, a primeira aula publicada disponível.
+O progresso exibido é derivado dos registros de `Progress` por aula publicada. A plataforma não cria progresso ao abrir uma aula nem conclui conteúdo automaticamente. O estudante pode marcar explicitamente uma aula como concluída; a Server Action valida novamente sessão, matrícula, hierarquia e publicação antes de criar ou atualizar o registro de progresso de forma idempotente. Essa ação não altera XP, streak, conquistas ou o status da matrícula.
+
+A página da aula permite navegar para o conteúdo publicado anterior ou seguinte na sequência global do curso. A ação **Continuar estudando** prioriza uma aula `IN_PROGRESS`, depois a primeira aula ainda não concluída e, por fim, a primeira aula publicada disponível.
 
 | Rota | Finalidade |
 | --- | --- |
@@ -177,4 +179,4 @@ Cada página valida no servidor a sessão, o papel `STUDENT`, a matrícula, o v�
 
 ## Escopo funcional
 
-A Sprint 09 cobre o dashboard do estudante, navegação `Course > Subject > Module > Lesson`, bloqueios server-side, consumo de conteúdo publicado e visualização do progresso já persistido. Matrícula pelo aluno, catálogo, execução de avaliações, timer, correção, resultados, atualização automática de progresso, gamificação, certificados e relatórios permanecem fora do escopo.
+A Sprint 10 amplia a experiência do estudante com renderização da aula, navegação anterior/próxima e conclusão explícita persistida em `Progress`. Matrícula pelo aluno, catálogo, execução de avaliações, timer, correção, resultados, progresso automático ao abrir conteúdo, gamificação, certificados e relatórios permanecem fora do escopo.

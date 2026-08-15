@@ -373,7 +373,7 @@ export async function getStudentLesson(
   moduleId: string,
   lessonId: string,
 ) {
-  return prisma.enrollment.findFirst({
+  const enrollment = await prisma.enrollment.findFirst({
     where: {
       courseId,
       course: {
@@ -438,4 +438,47 @@ export async function getStudentLesson(
       },
     },
   });
+
+  if (!enrollment) return null;
+
+  const navigationCourse = await prisma.course.findFirst({
+    where: { id: courseId, status: ContentStatus.PUBLISHED },
+    select: {
+      subjects: {
+        orderBy: { order: "asc" },
+        where: { status: ContentStatus.PUBLISHED },
+        select: {
+          id: true,
+          title: true,
+          modules: {
+            orderBy: { order: "asc" },
+            where: { status: ContentStatus.PUBLISHED },
+            select: {
+              id: true,
+              title: true,
+              lessons: {
+                orderBy: { order: "asc" },
+                where: { status: ContentStatus.PUBLISHED },
+                select: { id: true, order: true, title: true },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+  const navigationLessons: StudentLessonSummary[] =
+    navigationCourse?.subjects.flatMap((navigationSubject) =>
+      navigationSubject.modules.flatMap((navigationModule) =>
+        navigationModule.lessons.map((navigationLesson) => ({
+          ...navigationLesson,
+          moduleId: navigationModule.id,
+          moduleTitle: navigationModule.title,
+          subjectId: navigationSubject.id,
+          subjectTitle: navigationSubject.title,
+        })),
+      ),
+    ) ?? [];
+
+  return { ...enrollment, navigationLessons };
 }

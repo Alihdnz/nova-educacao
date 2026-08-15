@@ -1,19 +1,22 @@
 /* eslint-disable @next/next/no-img-element -- lesson media uses administrator-provided remote URLs */
 
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+import { completeLessonAction } from "@/app/student/lesson-actions";
 import { LessonContentRenderer } from "@/components/content/lesson-content-renderer";
 import { Container } from "@/components/layout/container";
+import { CompleteLessonForm } from "@/components/student/complete-lesson-form";
 import { StudentBreadcrumbs } from "@/components/student/student-breadcrumbs";
 import { LessonProgressBadge } from "@/components/student/student-progress";
 import { buttonVariants } from "@/components/ui/button";
 import { requireRole } from "@/lib/auth-guards";
-import { UserRole } from "@/lib/generated/prisma/client";
+import { ProgressStatus, UserRole } from "@/lib/generated/prisma/client";
 import {
   getStudentLesson,
+  lessonHref,
   lessonStatus,
   progressMap,
   studentCoursePath,
@@ -48,6 +51,22 @@ export default async function StudentLessonPage({
   if (!enrollment || !subject || !courseModule || !lesson) notFound();
 
   const status = lessonStatus(lesson.id, progressMap(enrollment.progresses));
+  const currentIndex = enrollment.navigationLessons.findIndex(
+    (navigationLesson) => navigationLesson.id === lesson.id,
+  );
+  const previousLesson =
+    currentIndex > 0 ? enrollment.navigationLessons[currentIndex - 1] : null;
+  const nextLesson =
+    currentIndex >= 0 && currentIndex < enrollment.navigationLessons.length - 1
+      ? enrollment.navigationLessons[currentIndex + 1]
+      : null;
+  const completeAction = completeLessonAction.bind(
+    null,
+    courseId,
+    subjectId,
+    moduleId,
+    lessonId,
+  );
 
   return (
     <Container className="py-8 sm:py-10">
@@ -107,14 +126,74 @@ export default async function StudentLessonPage({
             )}
           </div>
 
-          <footer className="mt-10 border-t pt-6">
+          <section
+            className="mt-10 flex flex-col gap-5 border-y py-6 sm:flex-row sm:items-center sm:justify-between"
+            aria-labelledby="lesson-progress-title"
+          >
+            <div>
+              <h2 className="text-sm font-semibold" id="lesson-progress-title">
+                Progresso da aula
+              </h2>
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                Registre a conclusão quando terminar este conteúdo.
+              </p>
+            </div>
+            <CompleteLessonForm
+              action={completeAction}
+              completed={status === ProgressStatus.COMPLETED}
+            />
+          </section>
+
+          <footer className="space-y-5 pt-6">
             <Link
-              className={buttonVariants({ variant: "outline" })}
+              className={buttonVariants({ variant: "ghost" })}
               href={studentModulePath(courseId, subjectId, moduleId)}
             >
               <ArrowLeft aria-hidden="true" />
               Voltar ao módulo
             </Link>
+
+            {previousLesson || nextLesson ? (
+              <nav
+                className="grid gap-3 sm:grid-cols-2"
+                aria-label="Navegação entre aulas"
+              >
+                {previousLesson ? (
+                  <Link
+                    className="flex min-h-20 items-center gap-3 rounded-lg border bg-background p-4 transition-colors hover:bg-muted"
+                    href={lessonHref(courseId, previousLesson)}
+                  >
+                    <ArrowLeft aria-hidden="true" className="size-4 shrink-0" />
+                    <span className="min-w-0">
+                      <span className="block text-xs text-muted-foreground">
+                        Aula anterior
+                      </span>
+                      <span className="mt-1 block truncate text-sm font-medium">
+                        {previousLesson.title}
+                      </span>
+                    </span>
+                  </Link>
+                ) : (
+                  <span aria-hidden="true" />
+                )}
+                {nextLesson ? (
+                  <Link
+                    className="flex min-h-20 items-center justify-end gap-3 rounded-lg border bg-background p-4 text-right transition-colors hover:bg-muted"
+                    href={lessonHref(courseId, nextLesson)}
+                  >
+                    <span className="min-w-0">
+                      <span className="block text-xs text-muted-foreground">
+                        Próxima aula
+                      </span>
+                      <span className="mt-1 block truncate text-sm font-medium">
+                        {nextLesson.title}
+                      </span>
+                    </span>
+                    <ArrowRight aria-hidden="true" className="size-4 shrink-0" />
+                  </Link>
+                ) : null}
+              </nav>
+            ) : null}
           </footer>
         </article>
       </div>
