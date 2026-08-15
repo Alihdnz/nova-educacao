@@ -6,6 +6,7 @@ import {
   ClipboardCheck,
   Home,
   Menu,
+  RotateCcw,
   UserRound,
   X,
 } from "lucide-react";
@@ -23,6 +24,7 @@ const navigation = [
   { href: "/student/courses", icon: BookOpen, label: "Meus cursos", mobileLabel: "Cursos" },
   { href: "/student/progress", icon: BarChart3, label: "Progresso", mobileLabel: "Progresso" },
   { href: "/student/exercises", icon: ClipboardCheck, label: "Exercícios", mobileLabel: "Avaliações" },
+  { href: "/student/review", icon: RotateCcw, label: "Revisão", mobileLabel: "Revisão" },
   { href: "/student/profile", icon: UserRound, label: "Perfil", mobileLabel: "Perfil" },
 ] as const;
 
@@ -73,7 +75,7 @@ function MobileNavigation() {
   const pathname = usePathname();
   return (
     <nav aria-label="Navegação principal do aluno" className="fixed inset-x-0 bottom-0 z-40 border-t bg-card/98 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-8px_24px_rgb(23_21_42/8%)] backdrop-blur lg:hidden">
-      <ul className="grid grid-cols-5 gap-1">
+      <ul className="grid grid-cols-6 gap-1">
         {navigation.map((item) => {
           const Icon = item.icon;
           const active = isActive(pathname, item);

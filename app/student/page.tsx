@@ -2,6 +2,7 @@
 
 import {
   ArrowRight,
+  BookMarked,
   BookOpen,
   BookOpenCheck,
   CircleCheckBig,
@@ -18,6 +19,7 @@ import { ProgressRing } from "@/components/shared/progress-ring";
 import { StatCard } from "@/components/shared/stat-card";
 import { AssessmentProgressList } from "@/components/student/assessment-progress-list";
 import { StudentCourseCard } from "@/components/student/student-course-card";
+import { ReviewRecommendationCard } from "@/components/student/review-recommendation-card";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { requireRole } from "@/lib/auth-guards";
@@ -26,12 +28,16 @@ import {
   getStudentProgressDashboard,
 } from "@/lib/student-progress";
 import { formatPercentage } from "@/lib/student-progress-calculation";
+import { getStudentReview } from "@/lib/student-review";
 
 export const metadata: Metadata = { title: "Dashboard do aluno" };
 
 export default async function StudentPage() {
   const session = await requireRole(UserRole.STUDENT);
-  const dashboard = await getStudentProgressDashboard(session.user.id);
+  const [dashboard, review] = await Promise.all([
+    getStudentProgressDashboard(session.user.id),
+    getStudentReview(session.user.id),
+  ]);
   const { overall } = dashboard;
   const inProgressCourses = dashboard.courses.filter((course) => !course.isCompleted);
   const completedCourses = dashboard.courses.filter((course) => course.isCompleted);
@@ -124,6 +130,14 @@ export default async function StudentPage() {
               <p className="text-sm text-muted-foreground">{overall.assessmentSummary.correctQuestions} acerto(s) em {overall.assessmentSummary.answeredQuestions} resposta(s)</p>
             </div>
             <AssessmentProgressList assessments={dashboard.assessments} emptyMessage="Você ainda não realizou avaliações." showCourse />
+          </section>
+
+          <section className="space-y-4" aria-labelledby="review-title">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div><h2 className="text-xl font-semibold" id="review-title">Revisão recomendada</h2><p className="mt-1 text-sm text-muted-foreground">Próximos conteúdos definidos pelo seu histórico de respostas.</p></div>
+              <Link className={buttonVariants({ variant: "outline" })} href="/student/review"><BookMarked aria-hidden="true" />Ver plano completo</Link>
+            </div>
+            {review.recommendations.length > 0 ? <div className="grid gap-4 xl:grid-cols-2">{review.recommendations.slice(0, 2).map((recommendation) => <ReviewRecommendationCard key={`${recommendation.enrollmentId}-${recommendation.assessmentId}`} recommendation={recommendation} />)}</div> : <Card><EmptyState description="As recomendações aparecerão quando houver avaliações publicadas em seus cursos." icon={BookMarked} title="Nenhuma revisão disponível" /></Card>}
           </section>
         </>
       )}

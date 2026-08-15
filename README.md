@@ -47,9 +47,10 @@ O seed cria credenciais idempotentes para:
 - `admin@example.com`, papel `ADMIN`, senha em `SEED_ADMIN_PASSWORD`;
 - `aluno@example.com`, papel `STUDENT`, senha em `SEED_STUDENT_PASSWORD`.
 - `aluno.sem.curso@example.com`, papel `STUDENT`, sem matrícula e com a senha em `SEED_STUDENT_PASSWORD`.
-- `aluno.isolado@example.com`, papel `STUDENT`, com progresso e tentativa próprios e a senha em `SEED_STUDENT_PASSWORD`.
+- `aluno.isolado@example.com`, papel `STUDENT`, com baixo desempenho e tentativas próprias e a senha em `SEED_STUDENT_PASSWORD`.
+- `aluno.novo@example.com`, papel `STUDENT`, matriculado e sem histórico de avaliações, com a senha em `SEED_STUDENT_PASSWORD`.
 
-Não existe cadastro público. O usuário `COURSE_MANAGER` permanece no domínio, mas não recebe acesso a `/admin` nesta sprint.
+O cadastro público fica em `/register`. O papel é sempre definido como `STUDENT` no servidor; campos de autorização, IDs e datas de sistema enviados pelo cliente não são aceitos. O usuário `COURSE_MANAGER` permanece no domínio, mas não recebe acesso a `/admin` nesta sprint.
 
 ## Autenticação e autorização
 
@@ -60,6 +61,7 @@ As regras atuais são:
 | Rota | Acesso |
 | --- | --- |
 | `/login` | Público; sessões existentes são redirecionadas para sua área |
+| `/register` | Público; cria exclusivamente contas `STUDENT` e autentica após o cadastro |
 | `/student` | Somente `STUDENT` |
 | `/student/courses/**` | Somente `STUDENT` com matrícula válida e acesso à hierarquia publicada |
 | `/admin` | Somente `ADMIN` |
@@ -86,6 +88,7 @@ Histórico atual:
 - `20260815013231_add_question_assessment_management`: dificuldade e explicação das questões, nota máxima e tempo limite das avaliações;
 - `20260815121946_add_student_assessment_results`: regra de aprovação e snapshots persistidos do resultado das tentativas;
 - `20260815122500_add_assessment_result_constraints`: checks dos resultados e garantia de uma única tentativa em andamento por matrícula e avaliação.
+- `20260815180000_add_student_registration_fields`: dados cadastrais opcionais para contas antigas, CPF único, índice de e-mail sem distinção entre maiúsculas e minúsculas e contexto de consentimento.
 
 Use `prisma migrate deploy` em produção. `prisma migrate reset` apaga os dados e só pode ser usado em um banco local descartável.
 
@@ -143,6 +146,9 @@ matrícula.
 | `/about` | Apresentação institucional da NOVA |
 | `/how-it-works` | Etapas da jornada de aprendizagem |
 | `/login` | Autenticação única para aluno e gestor |
+| `/register` | Cadastro público de estudante |
+| `/terms` | Termos de Uso vigentes |
+| `/privacy` | Política de Privacidade vigente |
 
 O login do aluno permanece evidente no header. O acesso do gestor fica
 discretamente no footer e aponta para `/login?role=admin`; essa escolha é apenas
@@ -222,6 +228,7 @@ A página da aula permite navegar para o conteúdo publicado anterior ou seguint
 | `/student/courses` | Todos os cursos matriculados e ação de continuidade |
 | `/student/progress` | Progresso consolidado e detalhamento por curso |
 | `/student/exercises` | Avaliações disponíveis, tentativas em andamento e resultados |
+| `/student/review` | Desempenho por conteúdo e revisões recomendadas |
 | `/student/profile` | Dados de acesso e resumo de aprendizagem em modo de consulta |
 | `/student/courses/[courseId]` | Visão do curso e disciplinas publicadas |
 | `/student/courses/[courseId]/subjects/[subjectId]` | Disciplina e módulos publicados |
@@ -263,9 +270,30 @@ Questões respondidas correspondem aos registros de `AttemptAnswer` das tentativ
 
 O carregamento consolidado fica em `lib/student-progress.ts` e usa uma única chamada Prisma para buscar as matrículas autorizadas com estrutura, progressos e tentativas relacionadas. Os cálculos são compartilhados pelo dashboard e pelas páginas de curso, disciplina e módulo, evitando consultas por item e divergências de fórmula.
 
+### Revisão e recomendações
+
+O motor em `lib/student-review.ts` é determinístico e não usa IA. Um erro é sempre um `AttemptAnswer.isCorrect = false` pertencente a uma tentativa `SUBMITTED`; tentativas em andamento, respostas de outro estudante e conteúdos fora de uma matrícula autorizada não participam dos cálculos.
+
+Os dados são agregados por questão, disciplina, módulo, aula e dificuldade na hierarquia existente `Course > Subject > Module > Lesson > Question`. Não existe uma taxonomia paralela de tópicos. Somente cursos, disciplinas, módulos, aulas, avaliações e questões atualmente publicados podem originar uma recomendação.
+
+As faixas centralizadas em `lib/student-review-calculation.ts` são:
+
+- 90% ou mais: **Excelente**;
+- de 70% a 89,99%: **Bom**;
+- de 50% a 69,99%: **Atenção**;
+- abaixo de 50%: **Revisão recomendada**;
+- menos de 3 respostas: **Dados insuficientes**.
+
+As sugestões priorizam, nesta ordem, menor aproveitamento com amostra mínima, erros recentes, dificuldade relacionada e conteúdos ainda não concluídos. Cada revisão reutiliza uma avaliação publicada e o fluxo existente de `Attempt`, preservando os resultados anteriores e evitando um segundo modelo de tentativa.
+
+### Cadastro e privacidade
+
+O cadastro solicita nome, sobrenome, e-mail, CPF, RG, gênero, data de nascimento e senha. Nomes e e-mail são normalizados; o CPF é armazenado apenas com dígitos e validado pelos dígitos verificadores. A idade não é persistida: ela é derivada da data de nascimento quando necessário.
+
+O Better Auth cria usuário, conta de credencial e sessão dentro de seu fluxo transacional, mantendo o hash da senha fora do código da aplicação. A API de cadastro mapeia explicitamente os campos aceitos e faz validação no servidor mesmo quando a interface já validou os mesmos dados.
+
+Os aceites dos Termos de Uso e da Política de Privacidade não vêm marcados. O banco registra separadamente data e versão de cada documento (`termsAcceptedAt`, `termsAcceptedVersion`, `privacyAcceptedAt` e `privacyAcceptedVersion`). CPF e RG não são retornados pela sessão nem exibidos integralmente no perfil.
+
 ## Escopo funcional
 
-A Sprint 13.2 consolida a identidade visual, a landing page, o catálogo público
-e a navegação real das áreas pública, administrativa e do estudante. Matrícula
-pelo aluno, gamificação, certificados, recomendações e analytics permanecem
-fora do escopo.
+A Sprint 14 acrescenta cadastro público de estudantes, análise de desempenho e recomendações determinísticas de revisão. Matrícula autônoma pelo aluno, recuperação de senha, gamificação completa, certificados, recomendações por IA e analytics administrativos permanecem fora do escopo.

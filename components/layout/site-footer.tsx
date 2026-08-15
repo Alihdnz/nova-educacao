@@ -9,6 +9,9 @@ const footerLinks = [
   { href: "/how-it-works", label: "Como funciona" },
   { href: "/about", label: "Sobre nós" },
   { href: "/login", label: "Acesso do aluno" },
+  { href: "/register", label: "Cadastre-se" },
+  { href: "/terms", label: "Termos de Uso" },
+  { href: "/privacy", label: "Privacidade" },
 ] as const;
 
 export function SiteFooter() {

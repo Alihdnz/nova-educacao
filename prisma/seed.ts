@@ -819,11 +819,34 @@ A demanda relaciona as quantidades que consumidores desejam adquirir aos diferen
 
   const student = await prisma.user.upsert({
     where: { email: "aluno@example.com" },
-    update: { name: "Aluno Exemplo", role: UserRole.STUDENT },
+    update: {
+      birthDate: new Date("2000-03-15T00:00:00.000Z"),
+      cpf: "52998224725",
+      firstName: "Aluno",
+      gender: "PREFER_NOT_TO_SAY",
+      lastName: "Exemplo",
+      name: "Aluno Exemplo",
+      privacyAcceptedAt: new Date("2026-08-15T12:00:00.000Z"),
+      privacyAcceptedVersion: "2026-08-15",
+      rg: "12.345.678-9",
+      role: UserRole.STUDENT,
+      termsAcceptedAt: new Date("2026-08-15T12:00:00.000Z"),
+      termsAcceptedVersion: "2026-08-15",
+    },
     create: {
+      birthDate: new Date("2000-03-15T00:00:00.000Z"),
+      cpf: "52998224725",
       name: "Aluno Exemplo",
       email: "aluno@example.com",
+      firstName: "Aluno",
+      gender: "PREFER_NOT_TO_SAY",
+      lastName: "Exemplo",
+      privacyAcceptedAt: new Date("2026-08-15T12:00:00.000Z"),
+      privacyAcceptedVersion: "2026-08-15",
+      rg: "12.345.678-9",
       role: UserRole.STUDENT,
+      termsAcceptedAt: new Date("2026-08-15T12:00:00.000Z"),
+      termsAcceptedVersion: "2026-08-15",
     },
   });
 
@@ -839,10 +862,43 @@ A demanda relaciona as quantidades que consumidores desejam adquirir aos diferen
 
   const isolatedStudent = await prisma.user.upsert({
     where: { email: "aluno.isolado@example.com" },
-    update: { name: "Aluno Isolado", role: UserRole.STUDENT },
-    create: {
-      email: "aluno.isolado@example.com",
+    update: {
+      birthDate: new Date("1998-11-08T00:00:00.000Z"),
+      cpf: "11144477735",
+      firstName: "Aluno",
+      gender: "MALE",
+      lastName: "Isolado",
       name: "Aluno Isolado",
+      privacyAcceptedAt: new Date("2026-08-15T12:00:00.000Z"),
+      privacyAcceptedVersion: "2026-08-15",
+      rg: "98.765.432-1",
+      role: UserRole.STUDENT,
+      termsAcceptedAt: new Date("2026-08-15T12:00:00.000Z"),
+      termsAcceptedVersion: "2026-08-15",
+    },
+    create: {
+      birthDate: new Date("1998-11-08T00:00:00.000Z"),
+      cpf: "11144477735",
+      email: "aluno.isolado@example.com",
+      firstName: "Aluno",
+      gender: "MALE",
+      lastName: "Isolado",
+      name: "Aluno Isolado",
+      privacyAcceptedAt: new Date("2026-08-15T12:00:00.000Z"),
+      privacyAcceptedVersion: "2026-08-15",
+      rg: "98.765.432-1",
+      role: UserRole.STUDENT,
+      termsAcceptedAt: new Date("2026-08-15T12:00:00.000Z"),
+      termsAcceptedVersion: "2026-08-15",
+    },
+  });
+
+  const studentWithoutHistory = await prisma.user.upsert({
+    where: { email: "aluno.novo@example.com" },
+    update: { name: "Aluno Novo", role: UserRole.STUDENT },
+    create: {
+      email: "aluno.novo@example.com",
+      name: "Aluno Novo",
       role: UserRole.STUDENT,
     },
   });
@@ -873,6 +929,21 @@ A demanda relaciona as quantidades que consumidores desejam adquirir aos diferen
   ]);
 
   await Promise.all([
+    prisma.account.upsert({
+      where: {
+        providerId_accountId: {
+          accountId: studentWithoutHistory.id,
+          providerId: "credential",
+        },
+      },
+      update: { password: studentPassword, userId: studentWithoutHistory.id },
+      create: {
+        accountId: studentWithoutHistory.id,
+        password: studentPassword,
+        providerId: "credential",
+        userId: studentWithoutHistory.id,
+      },
+    }),
     prisma.account.upsert({
       where: {
         providerId_accountId: {
@@ -994,6 +1065,21 @@ A demanda relaciona as quantidades que consumidores desejam adquirir aos diferen
       courseId: course.id,
       status: EnrollmentStatus.ACTIVE,
       userId: isolatedStudent.id,
+    },
+  });
+
+  await prisma.enrollment.upsert({
+    where: {
+      userId_courseId: {
+        courseId: course.id,
+        userId: studentWithoutHistory.id,
+      },
+    },
+    update: { completedAt: null, status: EnrollmentStatus.ACTIVE },
+    create: {
+      courseId: course.id,
+      status: EnrollmentStatus.ACTIVE,
+      userId: studentWithoutHistory.id,
     },
   });
 
@@ -1304,6 +1390,105 @@ A demanda relaciona as quantidades que consumidores desejam adquirir aos diferen
       isCorrect: true,
     },
   });
+
+  const highPerformanceAttempt = await prisma.attempt.upsert({
+    where: {
+      enrollmentId_assessmentId_attemptNumber: {
+        assessmentId: untimedAssessment.id,
+        attemptNumber: 1,
+        enrollmentId: enrollment.id,
+      },
+    },
+    update: {
+      correctAnswers: 2,
+      maxScoreSnapshot: 10,
+      passed: true,
+      passingPercentageSnapshot: 60,
+      percentage: 100,
+      score: 10,
+      status: AttemptStatus.SUBMITTED,
+      submittedAt: new Date("2026-08-02T13:30:00.000Z"),
+      timeLimitMinutesSnapshot: null,
+      totalQuestions: 2,
+    },
+    create: {
+      assessmentId: untimedAssessment.id,
+      attemptNumber: 1,
+      correctAnswers: 2,
+      enrollmentId: enrollment.id,
+      maxScoreSnapshot: 10,
+      passed: true,
+      passingPercentageSnapshot: 60,
+      percentage: 100,
+      score: 10,
+      startedAt: new Date("2026-08-02T13:20:00.000Z"),
+      status: AttemptStatus.SUBMITTED,
+      submittedAt: new Date("2026-08-02T13:30:00.000Z"),
+      timeLimitMinutesSnapshot: null,
+      totalQuestions: 2,
+    },
+  });
+
+  const lowPerformanceAttempt = await prisma.attempt.upsert({
+    where: {
+      enrollmentId_assessmentId_attemptNumber: {
+        assessmentId: untimedAssessment.id,
+        attemptNumber: 1,
+        enrollmentId: isolatedEnrollment.id,
+      },
+    },
+    update: {
+      correctAnswers: 0,
+      maxScoreSnapshot: 10,
+      passed: false,
+      passingPercentageSnapshot: 60,
+      percentage: 0,
+      score: 0,
+      status: AttemptStatus.SUBMITTED,
+      submittedAt: new Date("2026-08-04T10:30:00.000Z"),
+      timeLimitMinutesSnapshot: null,
+      totalQuestions: 2,
+    },
+    create: {
+      assessmentId: untimedAssessment.id,
+      attemptNumber: 1,
+      correctAnswers: 0,
+      enrollmentId: isolatedEnrollment.id,
+      maxScoreSnapshot: 10,
+      passed: false,
+      passingPercentageSnapshot: 60,
+      percentage: 0,
+      score: 0,
+      startedAt: new Date("2026-08-04T10:20:00.000Z"),
+      status: AttemptStatus.SUBMITTED,
+      submittedAt: new Date("2026-08-04T10:30:00.000Z"),
+      timeLimitMinutesSnapshot: null,
+      totalQuestions: 2,
+    },
+  });
+
+  await Promise.all([
+    prisma.attemptAnswer.upsert({
+      where: { attemptId_questionId: { attemptId: highPerformanceAttempt.id, questionId: scarcityQuestion.id } },
+      update: { isCorrect: true, selectedAnswerId: scarceResourcesAnswer.id },
+      create: { attemptId: highPerformanceAttempt.id, isCorrect: true, questionId: scarcityQuestion.id, selectedAnswerId: scarceResourcesAnswer.id },
+    }),
+    prisma.attemptAnswer.upsert({
+      where: { attemptId_questionId: { attemptId: highPerformanceAttempt.id, questionId: choicesQuestion.id } },
+      update: { isCorrect: true, selectedAnswerId: trueAnswer.id },
+      create: { attemptId: highPerformanceAttempt.id, isCorrect: true, questionId: choicesQuestion.id, selectedAnswerId: trueAnswer.id },
+    }),
+    prisma.attemptAnswer.upsert({
+      where: { attemptId_questionId: { attemptId: lowPerformanceAttempt.id, questionId: scarcityQuestion.id } },
+      update: { isCorrect: false, selectedAnswerId: unlimitedResourcesAnswer.id },
+      create: { attemptId: lowPerformanceAttempt.id, isCorrect: false, questionId: scarcityQuestion.id, selectedAnswerId: unlimitedResourcesAnswer.id },
+    }),
+    prisma.attemptAnswer.upsert({
+      where: { attemptId_questionId: { attemptId: lowPerformanceAttempt.id, questionId: choicesQuestion.id } },
+      update: { isCorrect: false, selectedAnswerId: falseAnswer.id },
+      create: { attemptId: lowPerformanceAttempt.id, isCorrect: false, questionId: choicesQuestion.id, selectedAnswerId: falseAnswer.id },
+    }),
+  ]);
 
   const achievement = await prisma.achievement.upsert({
     where: { slug: "primeira-aula-concluida" },

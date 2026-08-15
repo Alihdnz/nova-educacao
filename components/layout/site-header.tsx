@@ -1,6 +1,6 @@
 "use client";
 
-import { Menu, UserRound, X } from "lucide-react";
+import { Menu, UserPlus, UserRound, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -46,6 +46,16 @@ export function SiteHeader() {
 
         <div className="flex items-center gap-2">
           <Link
+            href="/register"
+            className={buttonVariants({
+              className: "hidden bg-white/8 text-white hover:bg-white/14 hover:text-white sm:inline-flex",
+              variant: "ghost",
+            })}
+          >
+            <UserPlus aria-hidden="true" />
+            Cadastre-se
+          </Link>
+          <Link
             href="/login"
             className={buttonVariants({
               className:
@@ -88,6 +98,12 @@ export function SiteHeader() {
                 </Link>
               </li>
             ))}
+            <li>
+              <Link className="nova-focus flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-semibold text-cyan-300 hover:bg-white/6" href="/register" onClick={() => setOpen(false)}>
+                <UserPlus aria-hidden="true" className="size-4" />
+                Cadastre-se
+              </Link>
+            </li>
           </ul>
         </nav>
       ) : null}

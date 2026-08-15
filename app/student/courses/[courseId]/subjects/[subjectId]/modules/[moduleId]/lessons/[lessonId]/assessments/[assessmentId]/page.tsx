@@ -1,5 +1,6 @@
 import {
   ArrowLeft,
+  BookMarked,
   CheckCircle2,
   Clock3,
   FileCheck2,
@@ -412,18 +413,13 @@ function AssessmentResult({
 
       <section
         aria-label="Resultado da avaliação"
-        className="nova-surface grid gap-px overflow-hidden bg-border sm:grid-cols-2 lg:grid-cols-4"
+        className="nova-surface grid gap-px overflow-hidden bg-border sm:grid-cols-2 xl:grid-cols-5"
       >
         {metric("Nota", `${score} de ${maxScore}`)}
         {metric("Percentual", `${percentage}%`)}
-        {metric(
-          "Acertos",
-          data.attempt.correctAnswers !== null &&
-            data.attempt.totalQuestions !== null
-            ? `${data.attempt.correctAnswers} de ${data.attempt.totalQuestions}`
-            : "Indisponível",
-        )}
-        {metric("Aprovação", `${passingPercentage}%`)}
+        {metric("Respostas", data.attempt.answeredQuestions === null ? "Indisponível" : String(data.attempt.answeredQuestions))}
+        {metric("Acertos", data.attempt.correctAnswers === null ? "Indisponível" : String(data.attempt.correctAnswers))}
+        {metric("Erros", data.attempt.incorrectAnswers === null ? "Indisponível" : String(data.attempt.incorrectAnswers))}
       </section>
 
       <section className="border-y py-5 text-sm text-muted-foreground">
@@ -441,6 +437,10 @@ function AssessmentResult({
         <Link className={buttonVariants({ variant: "outline" })} href={lessonPath}>
           <ArrowLeft aria-hidden="true" />
           Voltar para a aula
+        </Link>
+        <Link className={buttonVariants({ variant: "outline" })} href="/student/review">
+          <BookMarked aria-hidden="true" />
+          Conteúdos recomendados
         </Link>
         {data.canTryAgain ? (
           <StartAssessmentForm action={startAction} label="Nova tentativa" />

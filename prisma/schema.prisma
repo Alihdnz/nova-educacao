@@ -202,21 +202,31 @@ model AssessmentQuestion {
 // Sprint 04.3 - Identity, enrollment and learning records
 
 model User {
-  id             String            @id @default(cuid())
-  name           String            @db.VarChar(160)
-  email          String            @unique @db.VarChar(320)
-  emailVerified  Boolean           @default(false)
-  image          String?           @db.VarChar(2048)
-  role           UserRole          @default(STUDENT)
-  createdAt      DateTime          @default(now()) @db.Timestamptz(3)
-  updatedAt      DateTime          @updatedAt @db.Timestamptz(3)
-  sessions       Session[]
-  accounts       Account[]
-  enrollments    Enrollment[]
-  managedCourses CourseManager[]
-  xpTransactions XPTransaction[]
-  achievements   UserAchievement[]
-  streak         StudyStreak?
+  id                     String            @id @default(cuid())
+  name                   String            @db.VarChar(160)
+  firstName              String?           @db.VarChar(80)
+  lastName               String?           @db.VarChar(120)
+  email                  String            @unique @db.VarChar(320)
+  emailVerified          Boolean           @default(false)
+  image                  String?           @db.VarChar(2048)
+  role                   UserRole          @default(STUDENT)
+  cpf                    String?           @unique @db.VarChar(11)
+  rg                     String?           @db.VarChar(20)
+  gender                 String?           @db.VarChar(32)
+  birthDate              DateTime?         @db.Date
+  termsAcceptedAt        DateTime?         @db.Timestamptz(3)
+  termsAcceptedVersion   String?           @db.VarChar(32)
+  privacyAcceptedAt      DateTime?         @db.Timestamptz(3)
+  privacyAcceptedVersion String?           @db.VarChar(32)
+  createdAt              DateTime          @default(now()) @db.Timestamptz(3)
+  updatedAt              DateTime          @updatedAt @db.Timestamptz(3)
+  sessions               Session[]
+  accounts               Account[]
+  enrollments            Enrollment[]
+  managedCourses         CourseManager[]
+  xpTransactions         XPTransaction[]
+  achievements           UserAchievement[]
+  streak                 StudyStreak?
 
   @@index([role])
 }

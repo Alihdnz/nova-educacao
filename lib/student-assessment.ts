@@ -188,6 +188,7 @@ export function attemptHasExpired(
 }
 
 function publicResult(attempt: {
+  answers?: { isCorrect?: boolean | null }[];
   attemptNumber: number;
   correctAnswers: number | null;
   id: string;
@@ -202,8 +203,12 @@ function publicResult(attempt: {
   totalQuestions: number | null;
 }) {
   return {
+    answeredQuestions: attempt.answers?.length ?? null,
     attemptNumber: attempt.attemptNumber,
     correctAnswers: attempt.correctAnswers,
+    incorrectAnswers: attempt.answers
+      ? attempt.answers.filter((answer) => answer.isCorrect === false).length
+      : null,
     id: attempt.id,
     maxScore: attempt.maxScoreSnapshot?.toString() ?? null,
     passed: attempt.passed,
@@ -318,7 +323,7 @@ export async function getStudentAssessmentPageData(
     },
     select: {
       ...attemptResultSelect,
-      answers: { select: { questionId: true, selectedAnswerId: true } },
+      answers: { select: { isCorrect: true, questionId: true, selectedAnswerId: true } },
       timeLimitMinutesSnapshot: true,
     },
   });
