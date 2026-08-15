@@ -2,7 +2,15 @@ import { normalizeSlug } from "@/lib/course-structure-validation";
 
 export type AssessmentFormState = {
   errors?: Partial<
-    Record<"description" | "maxScore" | "slug" | "timeLimitMinutes" | "title", string[]>
+    Record<
+      | "description"
+      | "maxScore"
+      | "passingPercentage"
+      | "slug"
+      | "timeLimitMinutes"
+      | "title",
+      string[]
+    >
   >;
   message?: string;
 };
@@ -12,6 +20,7 @@ export const initialAssessmentFormState: AssessmentFormState = {};
 export type ParsedAssessment = {
   description: string | null;
   maxScore: string;
+  passingPercentage: string;
   slug: string;
   timeLimitMinutes: number | null;
   title: string;
@@ -35,6 +44,14 @@ function decimalValue(value: string) {
     : null;
 }
 
+function percentageValue(value: string) {
+  if (!/^\d+(?:[.,]\d{1,2})?$/.test(value)) return null;
+  const parsed = Number(value.replace(",", "."));
+  return Number.isFinite(parsed) && parsed >= 0 && parsed <= 100
+    ? parsed.toFixed(2)
+    : null;
+}
+
 export function parsePositiveWeight(formData: FormData) {
   return decimalValue(readString(formData, "weight"));
 }
@@ -44,6 +61,9 @@ export function parseAssessmentForm(formData: FormData): AssessmentValidationRes
   const slug = normalizeSlug(readString(formData, "slug"));
   const description = readString(formData, "description");
   const maxScore = decimalValue(readString(formData, "maxScore"));
+  const passingPercentage = percentageValue(
+    readString(formData, "passingPercentage"),
+  );
   const rawTimeLimit = readString(formData, "timeLimitMinutes");
   const timeLimitMinutes = rawTimeLimit ? Number(rawTimeLimit) : null;
   const errors: NonNullable<AssessmentFormState["errors"]> = {};
@@ -60,6 +80,10 @@ export function parseAssessmentForm(formData: FormData): AssessmentValidationRes
 
   if (!maxScore) errors.maxScore = ["Informe uma nota máxima entre 0,01 e 9.999,99."];
 
+  if (!passingPercentage) {
+    errors.passingPercentage = ["Informe um percentual entre 0 e 100."];
+  }
+
   if (
     timeLimitMinutes !== null &&
     (!Number.isInteger(timeLimitMinutes) || timeLimitMinutes < 1 || timeLimitMinutes > 1_440)
@@ -67,12 +91,15 @@ export function parseAssessmentForm(formData: FormData): AssessmentValidationRes
     errors.timeLimitMinutes = ["Informe um tempo entre 1 e 1.440 minutos."];
   }
 
-  if (!maxScore || Object.keys(errors).length > 0) return { errors, success: false };
+  if (!maxScore || !passingPercentage || Object.keys(errors).length > 0) {
+    return { errors, success: false };
+  }
 
   return {
     data: {
       description: description || null,
       maxScore,
+      passingPercentage,
       slug,
       timeLimitMinutes,
       title,

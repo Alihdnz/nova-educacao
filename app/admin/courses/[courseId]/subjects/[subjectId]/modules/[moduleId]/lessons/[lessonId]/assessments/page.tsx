@@ -28,7 +28,7 @@ export default async function AssessmentsPage({ params, searchParams }: PageProp
     select: {
       assessments: {
         orderBy: { updatedAt: "desc" },
-        select: { _count: { select: { questions: true } }, description: true, id: true, maxScore: true, slug: true, status: true, timeLimitMinutes: true, title: true, updatedAt: true },
+        select: { _count: { select: { questions: true } }, description: true, id: true, maxScore: true, passingPercentage: true, slug: true, status: true, timeLimitMinutes: true, title: true, updatedAt: true },
       },
       module: { select: { subject: { select: { course: { select: { title: true } }, title: true } }, title: true } },
       title: true,
@@ -70,6 +70,7 @@ export default async function AssessmentsPage({ params, searchParams }: PageProp
                   <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
                     <span>{assessment._count.questions} questão(ões)</span>
                     <span>Nota {assessment.maxScore.toString()}</span>
+                    <span>Aprovação {assessment.passingPercentage.toString()}%</span>
                     <span>{assessment.timeLimitMinutes ? `${assessment.timeLimitMinutes} min` : "Sem limite de tempo"}</span>
                     <span>Atualizada em {assessment.updatedAt.toLocaleDateString("pt-BR")}</span>
                   </div>

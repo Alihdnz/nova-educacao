@@ -167,19 +167,20 @@ model Answer {
 }
 
 model Assessment {
-  id               String               @id @default(cuid())
-  lessonId         String?
-  title            String               @db.VarChar(160)
-  slug             String               @unique @db.VarChar(160)
-  description      String?              @db.Text
-  maxScore         Decimal              @default(10) @db.Decimal(6, 2)
-  timeLimitMinutes Int?
-  status           ContentStatus        @default(DRAFT)
-  createdAt        DateTime             @default(now()) @db.Timestamptz(3)
-  updatedAt        DateTime             @updatedAt @db.Timestamptz(3)
-  lesson           Lesson?              @relation(fields: [lessonId], references: [id], onDelete: Restrict)
-  questions        AssessmentQuestion[]
-  attempts         Attempt[]
+  id                String               @id @default(cuid())
+  lessonId          String?
+  title             String               @db.VarChar(160)
+  slug              String               @unique @db.VarChar(160)
+  description       String?              @db.Text
+  maxScore          Decimal              @default(10) @db.Decimal(6, 2)
+  passingPercentage Decimal              @default(70) @db.Decimal(5, 2)
+  timeLimitMinutes  Int?
+  status            ContentStatus        @default(DRAFT)
+  createdAt         DateTime             @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime             @updatedAt @db.Timestamptz(3)
+  lesson            Lesson?              @relation(fields: [lessonId], references: [id], onDelete: Restrict)
+  questions         AssessmentQuestion[]
+  attempts          Attempt[]
 
   @@index([lessonId, status])
 }
@@ -314,21 +315,29 @@ model Progress {
 }
 
 model Attempt {
-  id            String          @id @default(cuid())
-  enrollmentId  String
-  assessmentId  String
-  attemptNumber Int
-  status        AttemptStatus   @default(IN_PROGRESS)
-  score         Decimal?        @db.Decimal(7, 2)
-  startedAt     DateTime        @default(now()) @db.Timestamptz(3)
-  submittedAt   DateTime?       @db.Timestamptz(3)
-  createdAt     DateTime        @default(now()) @db.Timestamptz(3)
-  updatedAt     DateTime        @updatedAt @db.Timestamptz(3)
-  enrollment    Enrollment      @relation(fields: [enrollmentId], references: [id], onDelete: Restrict)
-  assessment    Assessment      @relation(fields: [assessmentId], references: [id], onDelete: Restrict)
-  answers       AttemptAnswer[]
+  id                        String          @id @default(cuid())
+  enrollmentId              String
+  assessmentId              String
+  attemptNumber             Int
+  status                    AttemptStatus   @default(IN_PROGRESS)
+  score                     Decimal?        @db.Decimal(7, 2)
+  maxScoreSnapshot          Decimal?        @db.Decimal(6, 2)
+  percentage                Decimal?        @db.Decimal(5, 2)
+  passingPercentageSnapshot Decimal?        @db.Decimal(5, 2)
+  passed                    Boolean?
+  correctAnswers            Int?
+  totalQuestions            Int?
+  timeLimitMinutesSnapshot  Int?
+  startedAt                 DateTime        @default(now()) @db.Timestamptz(3)
+  submittedAt               DateTime?       @db.Timestamptz(3)
+  createdAt                 DateTime        @default(now()) @db.Timestamptz(3)
+  updatedAt                 DateTime        @updatedAt @db.Timestamptz(3)
+  enrollment                Enrollment      @relation(fields: [enrollmentId], references: [id], onDelete: Restrict)
+  assessment                Assessment      @relation(fields: [assessmentId], references: [id], onDelete: Restrict)
+  answers                   AttemptAnswer[]
 
   @@unique([enrollmentId, assessmentId, attemptNumber])
+  @@index([enrollmentId, assessmentId, status])
   @@index([assessmentId, status])
 }
 

@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element -- lesson media uses administrator-provided remote URLs */
 
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, ClipboardCheck, Clock3 } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -14,6 +14,7 @@ import { LessonProgressBadge } from "@/components/student/student-progress";
 import { buttonVariants } from "@/components/ui/button";
 import { requireRole } from "@/lib/auth-guards";
 import { ProgressStatus, UserRole } from "@/lib/generated/prisma/client";
+import { studentAssessmentPath } from "@/lib/student-assessment";
 import {
   getStudentLesson,
   lessonHref,
@@ -143,6 +144,65 @@ export default async function StudentLessonPage({
               completed={status === ProgressStatus.COMPLETED}
             />
           </section>
+
+          {lesson.assessments.length > 0 ? (
+            <section className="mt-10 space-y-4" aria-labelledby="assessments-title">
+              <div>
+                <h2 className="text-lg font-semibold" id="assessments-title">
+                  Avaliações
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Avaliações publicadas vinculadas a esta aula.
+                </p>
+              </div>
+              <div className="divide-y overflow-hidden rounded-lg border bg-background">
+                {lesson.assessments.map((assessment) => (
+                  <article
+                    className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5"
+                    key={assessment.id}
+                  >
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <ClipboardCheck
+                          aria-hidden="true"
+                          className="size-4 shrink-0 text-sky-700"
+                        />
+                        <h3 className="font-semibold">{assessment.title}</h3>
+                      </div>
+                      <p className="mt-1 line-clamp-2 text-sm leading-6 text-muted-foreground">
+                        {assessment.description || "Sem instruções adicionais."}
+                      </p>
+                      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                        <span>Nota {assessment.maxScore.toString()}</span>
+                        <span>
+                          Aprovação {assessment.passingPercentage.toString()}%
+                        </span>
+                        <span className="inline-flex items-center gap-1">
+                          <Clock3 aria-hidden="true" className="size-3.5" />
+                          {assessment.timeLimitMinutes
+                            ? `${assessment.timeLimitMinutes} min`
+                            : "Sem limite"}
+                        </span>
+                      </div>
+                    </div>
+                    <Link
+                      className={buttonVariants({ variant: "outline" })}
+                      href={studentAssessmentPath({
+                        assessmentId: assessment.id,
+                        courseId,
+                        lessonId,
+                        moduleId,
+                        subjectId,
+                      })}
+                    >
+                      Abrir avaliação
+                      <ArrowRight aria-hidden="true" />
+                    </Link>
+                  </article>
+                ))}
+              </div>
+            </section>
+          ) : null}
 
           <footer className="space-y-5 pt-6">
             <Link

@@ -82,7 +82,9 @@ Histórico atual:
 - `20260814192047_init_educational_domain`: domínio educacional da Sprint 04;
 - `20260814195346_add_authentication`: campos e tabelas centrais do Better Auth;
 - `20260815003348_add_lesson_image`: imagem principal opcional das aulas;
-- `20260815013231_add_question_assessment_management`: dificuldade e explicação das questões, nota máxima e tempo limite das avaliações.
+- `20260815013231_add_question_assessment_management`: dificuldade e explicação das questões, nota máxima e tempo limite das avaliações;
+- `20260815121946_add_student_assessment_results`: regra de aprovação e snapshots persistidos do resultado das tentativas;
+- `20260815122500_add_assessment_result_constraints`: checks dos resultados e garantia de uma única tentativa em andamento por matrícula e avaliação.
 
 Use `prisma migrate deploy` em produção. `prisma migrate reset` apaga os dados e só pode ser usado em um banco local descartável.
 
@@ -153,7 +155,7 @@ O enunciado é tratado como texto simples, sem HTML. A explicação é administr
 
 Avaliações pertencem a uma aula e referenciam questões existentes por `AssessmentQuestion`, sem copiar seu conteúdo. A mesma questão pode participar de várias avaliações, com ordem e peso independentes em cada uma. A seleção lista somente questões da aula atual.
 
-`Assessment.maxScore` define a nota máxima e `timeLimitMinutes` representa um limite opcional entre 1 e 1.440 minutos. Para publicar, a avaliação precisa ter ao menos uma questão publicada e válida, e a soma dos pesos positivos deve ser exatamente igual à nota máxima. Alterações estruturais em conteúdo publicado retornam a entidade afetada para rascunho; avaliações publicadas dependentes de uma questão alterada também voltam para rascunho.
+`Assessment.maxScore` define a nota máxima, `passingPercentage` define o percentual mínimo de aprovação entre 0 e 100 (70 por padrão) e `timeLimitMinutes` representa um limite opcional entre 1 e 1.440 minutos. Para publicar, a avaliação precisa ter ao menos uma questão publicada e válida, e a soma dos pesos positivos deve ser exatamente igual à nota máxima. Alterações estruturais em conteúdo publicado retornam a entidade afetada para rascunho; avaliações publicadas dependentes de uma questão alterada também voltam para rascunho.
 
 ### Ordenação
 
@@ -174,9 +176,22 @@ A página da aula permite navegar para o conteúdo publicado anterior ou seguint
 | `/student/courses/[courseId]/subjects/[subjectId]` | Disciplina e módulos publicados |
 | `/student/courses/[courseId]/subjects/[subjectId]/modules/[moduleId]` | Módulo, aulas publicadas e estados de progresso |
 | `/student/courses/[courseId]/subjects/[subjectId]/modules/[moduleId]/lessons/[lessonId]` | Conteúdo Markdown publicado da aula |
+| `/student/courses/[courseId]/subjects/[subjectId]/modules/[moduleId]/lessons/[lessonId]/assessments/[assessmentId]` | Início, execução e resultado de uma avaliação publicada |
 
 Cada página valida no servidor a sessão, o papel `STUDENT`, a matrícula, o vínculo completo `Course > Subject > Module > Lesson` e o status `PUBLISHED` de todos os níveis consultados. IDs manipulados, conteúdo não publicado e recursos fora da matrícula retornam o mesmo estado de conteúdo indisponível, sem revelar dados parciais. Listagens carregam apenas metadados; o campo `Lesson.content` é consultado somente na página da aula.
 
+### Execução de avaliações
+
+Uma avaliação publicada só pode ser iniciada por um estudante com matrícula `ACTIVE` ou `COMPLETED` na hierarquia publicada correta. O início cria uma `Attempt` ou retoma a única tentativa `IN_PROGRESS` existente para a mesma matrícula e avaliação. Cada seleção é salva imediatamente por upsert em `AttemptAnswer`, permitindo alterar a resposta e retomar a execução após refresh sem duplicá-la.
+
+As questões seguem `AssessmentQuestion.order`. O cliente recebe apenas enunciado, tipo e alternativas; `Answer.isCorrect`, `Question.explanation`, pesos e regras de correção permanecem no servidor. Questões não respondidas são corrigidas como incorretas, com aviso antes da finalização. Nesta sprint o resultado é geral e não inclui revisão detalhada nem explicações.
+
+Na submissão, o servidor compara as respostas persistidas, soma os pesos das questões corretas e limita a nota ao intervalo de zero a `Assessment.maxScore`. O percentual é `score / maxScore * 100`, arredondado para duas casas decimais com metade para cima. O aluno é aprovado quando o percentual é maior ou igual ao `Assessment.passingPercentage` configurado.
+
+A submissão altera a `Attempt` de `IN_PROGRESS` para `SUBMITTED` e persiste nota, nota máxima, percentual, limite de aprovação, aprovado/reprovado, acertos, total de questões, tempo configurado e data de submissão. Esses snapshots preservam o resultado histórico contra alterações posteriores na avaliação. Tentativas submetidas não são recalculadas e continuam consultáveis.
+
+Quando há limite de tempo, a expiração deriva de `startedAt` mais o limite copiado para a tentativa. O contador do navegador é apenas visual e é reconstruído após refresh; toda resposta e submissão revalidam o prazo no servidor. Ao expirar, as respostas já salvas são corrigidas e a tentativa é finalizada com segurança. Avaliações sem limite não exibem contador.
+
 ## Escopo funcional
 
-A Sprint 10 amplia a experiência do estudante com renderização da aula, navegação anterior/próxima e conclusão explícita persistida em `Progress`. Matrícula pelo aluno, catálogo, execução de avaliações, timer, correção, resultados, progresso automático ao abrir conteúdo, gamificação, certificados e relatórios permanecem fora do escopo.
+A Sprint 12 implementa iniciar ou retomar uma avaliação, persistir respostas, controlar prazo, corrigir no servidor e preservar/exibir resultados de tentativas. Matrícula pelo aluno, catálogo, limites complexos de tentativa, revisão detalhada, consolidação de progresso de curso/disciplina/módulo, gamificação, certificados e relatórios permanecem fora do escopo.

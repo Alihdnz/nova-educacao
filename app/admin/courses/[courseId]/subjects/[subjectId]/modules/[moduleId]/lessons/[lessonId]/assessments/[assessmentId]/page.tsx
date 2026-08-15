@@ -46,6 +46,7 @@ export default async function AssessmentDetailPage({ params, searchParams }: Pag
         },
       },
       maxScore: true,
+      passingPercentage: true,
       questions: {
         orderBy: { order: "asc" },
         select: {
@@ -91,9 +92,10 @@ export default async function AssessmentDetailPage({ params, searchParams }: Pag
       />
       <AdminFeedback error={error} success={success} />
 
-      <section aria-label="Resumo da avaliação" className="grid gap-px overflow-hidden rounded-lg border bg-border sm:grid-cols-2 lg:grid-cols-4">
+      <section aria-label="Resumo da avaliação" className="grid gap-px overflow-hidden rounded-lg border bg-border sm:grid-cols-2 lg:grid-cols-5">
         <div className="bg-background p-4"><p className="text-xs text-muted-foreground">Status</p><div className="mt-2"><ContentStatusBadge status={assessment.status} /></div></div>
         <div className="bg-background p-4"><p className="text-xs text-muted-foreground">Nota máxima</p><p className="mt-1 text-lg font-semibold tabular-nums">{assessment.maxScore.toString()}</p></div>
+        <div className="bg-background p-4"><p className="text-xs text-muted-foreground">Aprovação</p><p className="mt-1 text-lg font-semibold tabular-nums">{assessment.passingPercentage.toString()}%</p></div>
         <div className="bg-background p-4"><p className="text-xs text-muted-foreground">Soma dos pesos</p><p className={balanced ? "mt-1 text-lg font-semibold tabular-nums text-emerald-700" : "mt-1 text-lg font-semibold tabular-nums text-destructive"}>{totalWeight.toString()}</p></div>
         <div className="bg-background p-4"><p className="text-xs text-muted-foreground">Tempo</p><p className="mt-1 text-lg font-semibold tabular-nums">{assessment.timeLimitMinutes ? `${assessment.timeLimitMinutes} min` : "Sem limite"}</p></div>
       </section>

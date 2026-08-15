@@ -416,6 +416,18 @@ export async function getStudentLesson(
                       status: ContentStatus.PUBLISHED,
                     },
                     select: {
+                      assessments: {
+                        orderBy: { updatedAt: "desc" },
+                        where: { status: ContentStatus.PUBLISHED },
+                        select: {
+                          description: true,
+                          id: true,
+                          maxScore: true,
+                          passingPercentage: true,
+                          timeLimitMinutes: true,
+                          title: true,
+                        },
+                      },
                       content: true,
                       description: true,
                       id: true,

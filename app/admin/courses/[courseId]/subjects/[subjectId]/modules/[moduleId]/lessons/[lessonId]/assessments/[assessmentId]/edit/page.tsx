@@ -16,7 +16,7 @@ export default async function EditAssessmentPage({ params }: { params: Promise<{
   const { assessmentId, courseId, lessonId, moduleId, subjectId } = await params;
   const assessment = await prisma.assessment.findFirst({
     where: { id: assessmentId, lessonId, lesson: { id: lessonId, moduleId, module: { subjectId, subject: { courseId } } } },
-    select: { description: true, lesson: { select: { module: { select: { subject: { select: { course: { select: { title: true } }, title: true } }, title: true } }, title: true } }, maxScore: true, slug: true, status: true, timeLimitMinutes: true, title: true },
+    select: { description: true, lesson: { select: { module: { select: { subject: { select: { course: { select: { title: true } }, title: true } }, title: true } }, title: true } }, maxScore: true, passingPercentage: true, slug: true, status: true, timeLimitMinutes: true, title: true },
   });
   if (!assessment) notFound();
 
@@ -36,7 +36,7 @@ export default async function EditAssessmentPage({ params }: { params: Promise<{
         { label: "Editar avaliação" },
       ]} />
       <AdminPageHeader actions={<Link className={buttonVariants({ variant: "outline" })} href={`${base}/${assessmentId}`}><ListChecks aria-hidden="true" />Gerenciar questões</Link>} description="Atualize título, instruções, nota máxima e tempo limite." eyebrow="Avaliações" title={`Editar ${assessment.title}`} />
-      <AssessmentForm action={updateAssessmentAction.bind(null, courseId, subjectId, moduleId, lessonId, assessmentId)} cancelHref={base} defaults={{ ...assessment, maxScore: assessment.maxScore.toString() }} submitLabel="Salvar alterações" />
+      <AssessmentForm action={updateAssessmentAction.bind(null, courseId, subjectId, moduleId, lessonId, assessmentId)} cancelHref={base} defaults={{ ...assessment, maxScore: assessment.maxScore.toString(), passingPercentage: assessment.passingPercentage.toString() }} submitLabel="Salvar alterações" />
     </div>
   );
 }

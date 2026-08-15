@@ -22,6 +22,7 @@ type AssessmentFormAction = (
 type AssessmentDefaults = {
   description?: string | null;
   maxScore?: number | string;
+  passingPercentage?: number | string;
   slug?: string;
   status?: StructureStatus;
   timeLimitMinutes?: number | null;
@@ -108,7 +109,7 @@ export function AssessmentForm({
           <h2 className="text-sm font-semibold" id="assessment-configuration">Configuração</h2>
           <p className="mt-1 text-xs text-muted-foreground">A soma dos pesos deve corresponder à nota máxima antes da publicação.</p>
         </div>
-        <div className="grid gap-5 sm:grid-cols-2">
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           <div className="space-y-2">
             <label className="text-sm font-medium" htmlFor="maxScore">Nota máxima</label>
             <Input
@@ -123,6 +124,25 @@ export function AssessmentForm({
               type="number"
             />
             <FieldError errors={state.errors?.maxScore} />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium" htmlFor="passingPercentage">
+              Percentual para aprovação
+            </label>
+            <Input
+              aria-invalid={
+                state.errors?.passingPercentage?.length ? true : undefined
+              }
+              defaultValue={String(defaults?.passingPercentage ?? 70)}
+              id="passingPercentage"
+              max="100"
+              min="0"
+              name="passingPercentage"
+              required
+              step="0.01"
+              type="number"
+            />
+            <FieldError errors={state.errors?.passingPercentage} />
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium" htmlFor="timeLimitMinutes">Tempo limite em minutos</label>

@@ -556,6 +556,7 @@ A demanda relaciona as quantidades que consumidores desejam adquirir aos diferen
       description: "Avaliação introdutória sobre escassez e escolhas.",
       lessonId: economyLesson.id,
       maxScore: 10,
+      passingPercentage: 70,
       timeLimitMinutes: 20,
       title: "Avaliação de fundamentos de Economia",
       status: ContentStatus.PUBLISHED,
@@ -566,6 +567,7 @@ A demanda relaciona as quantidades que consumidores desejam adquirir aos diferen
       slug: "avaliacao-fundamentos-economia",
       description: "Avaliação introdutória sobre escassez e escolhas.",
       maxScore: 10,
+      passingPercentage: 70,
       timeLimitMinutes: 20,
       status: ContentStatus.PUBLISHED,
     },
@@ -603,12 +605,13 @@ A demanda relaciona as quantidades que consumidores desejam adquirir aos diferen
     },
   });
 
-  await prisma.assessment.upsert({
+  const draftAssessment = await prisma.assessment.upsert({
     where: { slug: "revisao-de-conceitos-economicos" },
     update: {
       description: "Avaliação em preparação para revisar os conceitos da aula.",
       lessonId: economyLesson.id,
       maxScore: 10,
+      passingPercentage: 70,
       status: ContentStatus.DRAFT,
       timeLimitMinutes: null,
       title: "Revisão de conceitos econômicos",
@@ -617,10 +620,89 @@ A demanda relaciona as quantidades que consumidores desejam adquirir aos diferen
       description: "Avaliação em preparação para revisar os conceitos da aula.",
       lessonId: economyLesson.id,
       maxScore: 10,
+      passingPercentage: 70,
       slug: "revisao-de-conceitos-economicos",
       status: ContentStatus.DRAFT,
       timeLimitMinutes: null,
       title: "Revisão de conceitos econômicos",
+    },
+  });
+
+  const untimedAssessment = await prisma.assessment.upsert({
+    where: { slug: "avaliacao-sem-limite-economia" },
+    update: {
+      description: "Avaliação de fundamentos sem limite de tempo.",
+      lessonId: economyLesson.id,
+      maxScore: 10,
+      passingPercentage: 60,
+      status: ContentStatus.PUBLISHED,
+      timeLimitMinutes: null,
+      title: "Avaliação sem limite de tempo",
+    },
+    create: {
+      description: "Avaliação de fundamentos sem limite de tempo.",
+      lessonId: economyLesson.id,
+      maxScore: 10,
+      passingPercentage: 60,
+      slug: "avaliacao-sem-limite-economia",
+      status: ContentStatus.PUBLISHED,
+      timeLimitMinutes: null,
+      title: "Avaliação sem limite de tempo",
+    },
+  });
+
+  await prisma.assessmentQuestion.upsert({
+    where: {
+      assessmentId_questionId: {
+        assessmentId: untimedAssessment.id,
+        questionId: scarcityQuestion.id,
+      },
+    },
+    update: { order: 1, weight: 5 },
+    create: {
+      assessmentId: untimedAssessment.id,
+      questionId: scarcityQuestion.id,
+      order: 1,
+      weight: 5,
+    },
+  });
+
+  await prisma.assessmentQuestion.upsert({
+    where: {
+      assessmentId_questionId: {
+        assessmentId: untimedAssessment.id,
+        questionId: choicesQuestion.id,
+      },
+    },
+    update: { order: 2, weight: 5 },
+    create: {
+      assessmentId: untimedAssessment.id,
+      questionId: choicesQuestion.id,
+      order: 2,
+      weight: 5,
+    },
+  });
+
+  const archivedAssessment = await prisma.assessment.upsert({
+    where: { slug: "avaliacao-arquivada-economia" },
+    update: {
+      description: "Avaliação arquivada para validar os bloqueios do aluno.",
+      lessonId: economyLesson.id,
+      maxScore: 10,
+      passingPercentage: 70,
+      status: ContentStatus.ARCHIVED,
+      timeLimitMinutes: 10,
+      title: "Avaliação arquivada",
+    },
+    create: {
+      description: "Avaliação arquivada para validar os bloqueios do aluno.",
+      lessonId: economyLesson.id,
+      maxScore: 10,
+      passingPercentage: 70,
+      slug: "avaliacao-arquivada-economia",
+      status: ContentStatus.ARCHIVED,
+      timeLimitMinutes: 10,
+      title: "Avaliação arquivada",
     },
   });
 
@@ -740,6 +822,32 @@ A demanda relaciona as quantidades que consumidores desejam adquirir aos diferen
     },
   });
 
+  const transientAttempts = await prisma.attempt.findMany({
+    where: {
+      enrollmentId: enrollment.id,
+      OR: [
+        { assessmentId: assessment.id, attemptNumber: { gt: 1 } },
+        {
+          assessmentId: {
+            in: [
+              draftAssessment.id,
+              untimedAssessment.id,
+              archivedAssessment.id,
+            ],
+          },
+        },
+      ],
+    },
+    select: { id: true },
+  });
+  const transientAttemptIds = transientAttempts.map((attempt) => attempt.id);
+  if (transientAttemptIds.length > 0) {
+    await prisma.attemptAnswer.deleteMany({
+      where: { attemptId: { in: transientAttemptIds } },
+    });
+    await prisma.attempt.deleteMany({ where: { id: { in: transientAttemptIds } } });
+  }
+
   await prisma.progress.upsert({
     where: {
       enrollmentId_lessonId: {
@@ -790,18 +898,32 @@ A demanda relaciona as quantidades que consumidores desejam adquirir aos diferen
       },
     },
     update: {
+      correctAnswers: 2,
+      maxScoreSnapshot: 10,
+      passed: true,
+      passingPercentageSnapshot: 70,
+      percentage: 100,
       status: AttemptStatus.SUBMITTED,
       score: 10,
       submittedAt: new Date("2026-08-01T12:45:00.000Z"),
+      timeLimitMinutesSnapshot: 20,
+      totalQuestions: 2,
     },
     create: {
       enrollmentId: enrollment.id,
       assessmentId: assessment.id,
       attemptNumber: 1,
+      correctAnswers: 2,
+      maxScoreSnapshot: 10,
+      passed: true,
+      passingPercentageSnapshot: 70,
+      percentage: 100,
       status: AttemptStatus.SUBMITTED,
       score: 10,
       startedAt: new Date("2026-08-01T12:35:00.000Z"),
       submittedAt: new Date("2026-08-01T12:45:00.000Z"),
+      timeLimitMinutesSnapshot: 20,
+      totalQuestions: 2,
     },
   });
 
